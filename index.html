@@ -3,18 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>문열어 민환기</title>
+  <link rel="icon" href="./src/favicon.ico">
+  <link rel="stylesheet" href="./styles/common.css">
+  <script src="https://kit.fontawesome.com/e7c9242ec2.js" crossorigin="anonymous"></script>
+  <!-- 인증키 -->
+  <script defer src="./script/apikey.js"></script>
+  <script defer src="./script/main.js"></script>
 </head>
 <body>
-  <header id="header"></header>
+  <header id="header">
+    <i class="fa-solid fa-bars menu_bar"></i>
+    <div class="menu_list animated">
+      <div class="menu_icon">
+        <i class="fa-solid fa-bars"></i>
+      </div>
+      <ul>
+        <li><a href="">메뉴1</a></li>
+        <li><a href="">메뉴2</a></li>
+        <li><a href="">메뉴3</a></li>
+        <div class="search">
+          <h2 class="hidden">검색창</h2>
+          <h3>주소 검색</h3>
+          <input type="text" placeholder="주소를 입력하세요." list="searchList">
+          <button type="submit"></button>
+        </div>
+      </ul>
+    </div>
+    <h1 class="web_name">문열어 민환기</h1>
+    <div class="more"></div>
+  </header>
   
   <div id="container" class="container">
-    <section class="total_condition"></section>
-    <section class="dust_condition"></section>
+    <section class="dust">
+      <div class="wait active"><h3 class="hidden">미세먼지 페이지 불러오는 중</h3><i class="fa-solid fa-circle-notch"></i><span>오늘의 미세먼지는?</span></div>
+      <!-- 통합대기 -->
+      <div class="total_condition">
+        <h1 class="hidden">현재 통합대기 미세먼지</h1>
+        <span class="current_location"></span>
+        <span class="cuttent_time"></span>
+        <span class="total_emoji"></span>
+        <span class="total_status"></span>
+        <span class="percent"></span>
+      </div>
+      <!-- 종류별 -->
+      <div class="dust_condition"></div>
+      <!-- 지도 -->
+      <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
+    </section>
+    <section class="weather"></section>
   </div>
 
   <footer id="footer"></footer>
-  <script src="./script/apikey.js"></script>
-  <script src="./script/main.js"></script>
+
 </body>
 </html>

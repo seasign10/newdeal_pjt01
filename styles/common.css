@@ -1,0 +1,228 @@
+/* reset */
+*{margin: 0;padding: 0;list-style: none;font-weight: normal;font-size: 16px;text-decoration: none;}
+html, body{min-width: 500px;}
+
+/* base */
+.hidden{display: inline-block;width: 0;height: 0;font-size: 0;z-index: -999;}
+span{text-align: center;display: inline-block;}
+.animated{transition: 0.5s ease;}
+
+/* styles */
+/* 상단 */
+#header{
+  height: 68px;
+  background-color: #33743b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+#header .menu_bar{
+  font-size: 36px;
+  color: #fff;
+  margin-left: 1rem;
+}
+#header .menu_bar:hover{
+  color: #172e12;
+  cursor: pointer;
+}
+#header .menu_list.active{
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 280px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  box-shadow: 0 12px 12px rgba(0, 0, 0, 0.3);
+}
+#header .menu_list{
+  position: absolute;
+  left: -280px;
+  top: 0;
+  z-index: 1;
+  width: 280px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+#header .menu_list>ul{
+  margin-top: 1rem;
+  padding: 1rem;
+}
+#header .menu_list>ul>li{
+  height: 60px;
+  text-align: end;
+  line-height: 60px;
+  padding-right: 1rem;
+  background-color: #fff;
+  border-bottom: 1px solid #e4e8e4;
+}
+#header .menu_list>ul>li>a{
+  font-size: 32px;
+  font-weight: 700;
+  color: #172e12;
+}
+#header .menu_list>ul>li>a:hover{
+  color: #33743b;
+}
+#header .menu_list .menu_icon{
+  background-color: #172e12;
+}
+#header .menu_list i{
+  padding: 1rem;
+  font-size: 36px;
+  color: #fff;
+  cursor: pointer;
+}
+#header .web_name{
+  color: #fff;
+  font-size: 32px;
+  font-weight: 700;
+  font-style: italic;
+}
+
+
+
+/* 중단 - 미세먼지 */
+#container{display: flex;margin: 3rem auto;justify-content: space-around;flex-wrap: wrap;}
+section.dust{display: flex;flex-direction: column;align-items: center;}
+#container .total_condition{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+#container .total_condition .current_location {
+  font-size: 40px;
+  font-weight: bold;
+}
+#container .total_condition .cuttent_time {
+  margin: 1rem;
+  font-size: 24px;
+}
+#container .total_condition .total_emoji {
+  margin-bottom: 1rem;
+}
+#container .total_condition .total_emoji>i {
+  font-size: 100px;
+}
+#container .total_condition .total_status {
+  font-size: 28px;
+}
+#container .total_condition .percent {
+  font-size: 20px;
+  position: relative;
+}
+#container .total_condition .query_box {
+  display: none;
+}
+#container .total_condition .query_box.on {
+  position: absolute;
+  top: -80px;
+  left: 112px;
+  padding: 0.5rem;
+  display: inline-block;
+  white-space: nowrap;
+  color: #ff8a6a;
+  border: 1px solid orange;
+  border-radius: 10px;
+  background-color: #ffe5a4b0;
+  text-align: left;
+}
+#container .total_condition .query_box>dt {
+  font-weight: 900;
+  color: #ff7b5a;
+  margin-bottom: 0.2rem;
+}
+#container .total_condition .query_box>dd:nth-child(3) {
+  font-size: 12px;
+  text-align: end;
+  margin-top: 0.2rem;
+  color: #854c3e;
+}
+#container .total_condition .percent i {
+  margin-right: 0.2rem;
+  margin-top: 0.3rem;
+  font-size: 20px;
+}
+
+#container .dust_condition>ul{
+  display: flex;
+  width: 400px;
+  overflow-x: auto;
+
+  height: 172px;
+}
+#container .dust_condition>ul>li{
+  display: flex;
+}
+#container .dust_condition>ul>li.on{
+}
+#container .dust_condition dl{
+  width: 100px;
+  margin: 1rem 0.5rem;
+  padding: 0.8rem;
+  border-radius: 20px;
+  color: #fff;
+}
+#container .dust_condition dt{text-align: center;}
+#container .dust_condition dd{text-align: center;}
+#container .dust_condition dd>i{font-size: 32px;margin: 0.5rem 0;}
+#container .naver_map{
+  margin: 3rem;
+  border-radius: 100%;
+  overflow: hidden;
+}
+#container .naver_map .loaction_icon{
+  font-size: 40px;
+  color: rgb(255, 111, 0);
+}
+#container .naver_map .undefined_location{
+  background-color: #fff;
+  padding: 1rem;
+  border: 1px solid silver;
+  border-radius: 32px;
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* naver.style.이 먹히지 않으므로 강제 style */
+#map>div>div{cursor: default;}
+#map>div>div>div>div>div>div>div{
+  background-color: rgba(255, 255, 255, 0) !important;
+  border: 0 !important;
+}
+#map>div>div>div>div>div>div>div>div{
+  background-color: rgba(255, 255, 255, 0) !important;
+  border-color: rgba(255, 255, 255, 0) !important;
+  border-style: none !important;
+}
+
+/* 중단 - 날씨 */
+#container .weather{width: 400px;background-color: blue;height: 700px;}
+
+
+/* 하단 */
+#footer{background-color: #33743b;height: 32px;}
+
+
+/* 편의성 및 접근성 style */
+.fa-circle-question{margin-left: 0.3rem;color: orange;cursor: pointer;font-size: 24px;}
+.fa-circle-question:hover{color: rgb(255, 98, 0);}
+.wait{display: none;}
+.wait.active{display: flex;flex-direction: column;align-items: center;}
+.wait>span{font-size: 28px;font-weight: 700;color: rgb(30, 29, 29);font-style: italic;}
+.wait>i{margin-left: 0.2rem;color: silver;font-size: 32px;margin-bottom: 1rem;}
+/* rotate_image 라는 이름을 가진 키프레임을 실행
+  6s : 6초에 한번씩 (animation-duration)
+  linear : 동일한 속도로 (animation-timing-function)*/
+.wait i{animation: rotate_icon 3s linear infinite;transform-origin: 50% 50%;}
+@keyframes rotate_icon{
+  100% {
+    transform: rotate(360deg);
+  }
+}

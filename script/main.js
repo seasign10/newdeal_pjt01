@@ -418,7 +418,7 @@ function selectCity(local){
     matchingRegion(selectedValue);
   });
 
-  function matchingRegion(v){
+  function matchingRegion(v){ // 제대로 값이 받아지는 것을 확인
     let localCode = '';
     for(i=0;i<local.length;i++){
       if(local[i].name==v){
@@ -440,6 +440,10 @@ function selectCity(local){
         }
         dataList += `</datalist>`
         addData.innerHTML = dataList;
+        const region = document.querySelectorAll('#search_list option')
+        for(m=0;m<region.length;m++){
+          console.log(region[m].value);
+        }
       }
       getRegionData();
   };

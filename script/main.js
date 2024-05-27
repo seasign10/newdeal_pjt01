@@ -227,7 +227,7 @@ const getData = async ()=>{
       // console.log(local[i].code);
     }
   }
-  const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${localCode}&ver=1.0`);
+  const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
   const response = await fetch(url);
   const data = await response.json();
   let localDust = data.response.body.items;
@@ -250,6 +250,7 @@ const getData = async ()=>{
   const menuInBtn = document.querySelector('.menu_icon i');
   reAppear()
   menuList(menu, menuBtn, menuInBtn);
+  selectCity(local)
 }
 // getData();
 
@@ -366,11 +367,9 @@ function queryIcon(){
   const queryBtn = document.querySelector('.fa-circle-question');
   const queryTxt = document.querySelector('.query_box')
   queryBtn.addEventListener('mouseenter', ()=>{
-    console.log('enter')
     queryTxt.classList.add('on')
   });
   queryBtn.addEventListener('mouseleave', ()=>{
-    console.log('leave')
     queryTxt.classList.remove('on')
   });
 }
@@ -389,9 +388,68 @@ const menuChange = document.querySelector('.fa-bars');
 menuChange.classList.remove('fa-bars');
 menuChange.classList.add('fa-circle-notch');
 menuChange.style.animation = 'rotate_icon 3s linear infinite';
-
+// 매뉴 나타나기
 function reAppear(){
   menuChange.classList.remove('fa-circle-notch');
   menuChange.classList.add('fa-bars');
   menuChange.style.animation = 'none';
+}
+
+// 검색창
+// select로 city 선택
+function selectCity(local){
+  const inputCity = document.querySelector('select.addr_city');
+  for(i=0;i<local.length;i++){
+    inputCity.innerHTML += `<option name="city" value="${local[i].name}">${local[i].name}</option>`
+  }
+
+  const citySelected = document.querySelector('.addr_city');
+  citySelected.addEventListener('click', ()=>{
+    citySelected.style.color = 'black';
+  });
+
+  // 여기서 city는 select의 id | 하지만 이미 selected를 지정한 태그가 있어서 로드 되자마자 선택된 것을 출력하고
+  // 선택 시, 재 출력이 되지 않는다.
+  // let cityValue = inputCity.options[city.selectedIndex].value;
+  const selectElement = document.querySelector('.addr_city');
+  let selectedValue = '';
+  selectElement.addEventListener('change', (event)=>{
+    selectedValue = event.target.value;
+    matchingRegion(selectedValue);
+  });
+
+  function matchingRegion(v){
+    let localCode = '';
+    for(i=0;i<local.length;i++){
+      if(local[i].name==v){
+        localCode = local[i].code;
+      }}
+      // 지역을 받고 > url 다시 요청, 데이터 값 받아서 region 값을 다 리스트에 담기 > datalist를 출력,
+      const getRegionData = async ()=>{
+        url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
+      
+        const response = await fetch(url);
+        const data = await response.json();
+        let localDust = data.response.body.items;
+        // 이제 검색창에 띄워주기
+
+        const addData = document.querySelector('.search_select');
+        let dataList = `<datalist id="search_list">`
+        for(k=0;k<localDust.length;k++){
+          dataList += `<option value="${localDust[k].stationName}" />`
+        }
+        dataList += `</datalist>`
+        addData.innerHTML = dataList;
+      }
+      getRegionData();
+  };
+
+
+
+
+
+
+  
+
+  
 }

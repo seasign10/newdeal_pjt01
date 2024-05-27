@@ -175,5 +175,113 @@ const local = [
      }
      ```
 
-     
+
+
+- select의 선택된 option의 value 또는 text 값을 가져오기
+
+  ```js
+  const citySelected = document.querySelector('.addr_city');
+  // 여기서 city는 select의 id 
+  let cityValue = inputCity.options[city.selectedIndex].value;
+  ```
+
+  - 하지만 이미 selected를 지정한 태그가 있어서 로드 되자마자 선택된 것을 출력하고 선택 시, 재 출력이 되지 않는다.
+
+    - 해결 과정
+      이벤트 리스너 `change`를 사용하여 값이 변할 때 마다 함수가 실행되도록 한다.
+      
+      ```js
+      const selectElement = document.querySelector('.addr_city');
+        let selectedValue = '';
+        selectElement.addEventListener('change', (event)=>{
+          selectedValue = event.target.value;
+          matchingRegion(selectedValue);
+        });
+      ```
+      
+
+
+
+
+
+- 함수가 실행은 되지만, 한번 밖에 실행되지 않는다.
+
+  ```html
+  <div class="search">
+          <h2 class="hidden">검색창</h2>
+          <h3>주소 검색</h3>
+          <select class="addr_city" name="addr_city" id="addr_city">
+            <option class="choice_city" disabled hidden selected>지역을 선택하세요.</option>
+            <!-- js로 옵션 넣기 -->
+          </select>
+          <input class="input_search" type="text" placeholder="주소를 입력하세요." list="search_list">
+          <button type="submit">검색</button>
+        </div>
+  ```
+
+  ```js
+  function matchingRegion(v){
+      let localCode = '';
+      for(i=0;i<local.length;i++){
+        if(local[i].name==v){
+          localCode = local[i].code;
+        }}
+        // 지역을 받고 > url 다시 요청, 데이터 값 받아서 region 값을 다 리스트에 담기 > datalist를 출력,
+        const getRegionData = async ()=>{
+          url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
+        
+          const response = await fetch(url);
+          const data = await response.json();
+          let localDust = data.response.body.items;
+          // 이제 검색창에 띄워주기
+  
+          const addData = document.querySelector('.search');
+          let dataList = `<datalist id="search_list">`
+          for(k=0;k<localDust.length;k++){
+            dataList += `<option value="${localDust[k].stationName}" />`
+          }
+          dataList += `</datalist>`
+          addData.innerHTML += dataList;
+        }
+        getRegionData();
+    };
+  ```
+
+  - 해결과정
+    이미 함수는 제대로 실행되고 있다. `addData` 에 추가하는 방식이 아닌, 덮어씌우는 방식을 사용해보자.
+
+    ```html
+    ...
+    				<!-- js로 옵션 넣기 -->
+            </select>
+            <input class="input_search" type="text" placeholder="주소를 입력하세요." list="search_list">
+            <button type="submit">검색</button>
+      
+      			<!-- 덮어씌워주기 위해 공간을 새로 만들어 주었다. -->
+            <div class="search_select"></div>
+          </div>
+    ```
+
+    ```js
+    ...
+          // 새로운 공간(class="search_select")에 덮어씌워주자.
+          const addData = document.querySelector('.search_select');
+          let dataList = `<datalist id="search_list">`
+          for(k=0;k<localDust.length;k++){
+            dataList += `<option value="${localDust[k].stationName}" />`
+          }
+        	dataList += `</datalist>`
+    
+        	// 덮어 씌우기
+        	addData.innerHTML = dataList;
+        }
+    		getRegionData();
+    ```
+
+    - 처음에는 함수가 한번만 실행이 되어서 한번만 출력이 되는 줄 알았으나, 이벤트리스너는 한번 추가되면 계속 작동하는 원리라는 것을 깨달았다. 해당 코드로 바꾸니 제대로 작동을 한다! (`select option` 을 고르면 초반 입력값이 지워지는 것도 해결 되었다.)
+
+
+
+- 미세먼지 측정지역이 아닌 곳은 경도 위도가 가장 가까운 곳에서 유사 데이터를 뽑아오는 것 같다. 
+  이 문제를 해결하는 것은 가장 마지막에 추가해보자.
 

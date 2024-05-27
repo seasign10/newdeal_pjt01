@@ -22,13 +22,18 @@
         <li><a href="">메뉴1</a></li>
         <li><a href="">메뉴2</a></li>
         <li><a href="">메뉴3</a></li>
-        <div class="search">
-          <h2 class="hidden">검색창</h2>
-          <h3>주소 검색</h3>
-          <input type="text" placeholder="주소를 입력하세요." list="searchList">
-          <button type="submit"></button>
-        </div>
       </ul>
+      <div class="search">
+        <h2 class="hidden">검색창</h2>
+        <h3>주소 검색</h3>
+        <select class="addr_city" name="addr_city" id="addr_city">
+          <option class="choice_city" disabled hidden selected>지역을 선택하세요.</option>
+          <!-- js로 옵션 넣기 -->
+        </select>
+        <input class="input_search" type="text" placeholder="주소를 입력하세요." list="search_list">
+        <button type="submit">검색</button>
+        <div class="search_select"></div>
+      </div>
     </div>
     <h1 class="web_name">문열어 민환기</h1>
     <div class="more"></div>
@@ -51,7 +56,7 @@
       <!-- 지도 -->
       <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
     </section>
-    <section class="weather"></section>
+    <section class="weather" style="font-size: 40px;color: aliceblue;">날씨 데이터</section>
   </div>
 
   <footer id="footer"></footer>

@@ -1,6 +1,7 @@
 // survice_key
 const API_KEY = config.apikey;
 const NAVER_API_CLIENT_ID = config.NAVER_API_CLIENT_ID;
+const VWORLD_API_KEY = config.vworld_apikey;
 
 // local addr data
 const local = [
@@ -169,32 +170,39 @@ async function asyncNaverAPI(){
         }
       );
     }
-
-    // 주소 > 좌표
-    function searchAddressToCoordinate(address) {
-      naver.maps.Service.geocode({
-        query: address
-      }, function (status, response) {
-        if (status === naver.maps.Service.Status.ERROR) {
-          return alert('위치를 불러오는 중 문제가 생겼습니다.');
-        }
-        if (response.v2.meta.totalCount === 0) {
-          return alert('totalCount' + response.v2.meta.totalCount);
-        }
-          item = response.v2.addresses[0],
-          // 좌표
-          point = new naver.maps.Point(item.x, item.y);
-      });
-    }
-
-    // 값을 집어 넣는 곳
-    function initGeocoder(inputCity, inputRegion) {
-      // searchAddressToCoordinate(`${inputCity} ${inputRegion}`);
-      searchAddressToCoordinate(`서울 은평구`);
-    }
-    naver.maps.onJSContentLoaded = initGeocoder
-/////////////////////////////////////////////////////
 }
+
+// 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
+function searchAddressToCoordinate(address){
+  naver.maps.Service.geocode({
+    query: address
+  }, function (status, response) {
+    if (status === naver.maps.Service.Status.ERROR) {
+      return alert('위치를 불러오는 중 문제가 생겼습니다.');
+    }
+    // 주소를 도로명으로 찾을 때, 건물명까지 입력하지 않으면 응답받지 못한다.
+    if (response.v2.meta.totalCount === 0) {
+      // return alert('totalCount' + response.v2.meta.totalCount);
+      return alert('도로명 주소는 찾을 수 없습니다.');
+    }
+      item = response.v2.addresses[0];
+      console.log(item)
+      // 좌표
+      // point = new naver.maps.Point(item.x, item.y);
+      let pointMove = new naver.maps.LatLng(item.y, item.x)
+
+      // 맵 이동
+      address = address.split(' ');
+      let infowindow = new naver.maps.InfoWindow();
+      map.setCenter(pointMove);
+      infowindow.setContent(`<i class="fa-solid fa-location-dot loaction_icon"></i>`);
+      infowindow.open(map, map.getCenter()); // 현재 위치에 인포 윈도우를 엽니다.
+      updateInfo(address[0], address[1]); // 0 city | 1 region
+      getData();
+
+  });
+}
+
 // 아이디 인증실패시
 window.navermap_authFailure = function () {
   console.warn('클라이언트 아이디를 확인해주세요.');
@@ -256,7 +264,7 @@ const getData = async ()=>{
 
 // 우선순위 및 사용하기 좋게 배열에 값을 담아준다.
 const dustLv = ['좋음', '보통', '나쁨', '매우나쁨'];
-const statusColor = ['blue', 'green', 'orange', 'red'];
+const statusColor = ['#0062ff', 'green', 'orange', 'red'];
 const statusEmoji = ['laugh-squint', 'smile-wink', 'surprise', 'tired'];
 const dustType = ['pm10', 'pm25', 'no2', 'o3', 'co', 'so2'];
 const dustName = ['미세먼지', '초미세먼지', '이산화질소', '오존', '일산화탄소', '아황산가스'];
@@ -277,27 +285,36 @@ let value = '';
 // UI content
 let dustContent = ``
 
-
 // let statusNow = ()=>{};
 // function statusNow(){};
 function statusNowUI(data){
   document.querySelector('.current_location').innerHTML = `${addrCity} ${addrRegion}`
-  // console.log(data.length);
   // grade = 좋음~나쁨 | value : 측정값
   for(let i=0;i<data.length;i++){
     if(data[i].stationName == addrRegion){ // 특정 지역을 filter
       dustTotalGrade = data[i].khaiGrade;
       dustTotalValue = data[i].khaiValue;
-
       // data[i]의 값을 다 가져오고 싶다면?
       allDust(data, i);
     }
   }
   dustListUI(dustValue, dustGrade);
 
+
   // console.log(dustTotalValue); // 수치를 가공해서 퍼센테이지로 대기수준을 표시하고 싶음.
-  totalPercent = Math.floor((dustTotalValue*2)*0.1);
-  document.querySelector('.percent').innerHTML = `<i class="fa-solid fa-earth-asia"></i>${totalPercent}%<i class="fa-solid fa-circle-question"></i>`;
+  if(!dustTotalValue || dustTotalValue=='-' || dustTotalValue=='통신장애'){
+    document.querySelector('.percent').innerHTML = `
+    <div class="khai">통합대기지수<i class="fa-solid fa-circle-question"></i></div>
+    <i class="fa-solid fa-earth-asia"></i>
+    No Data
+    `;
+  }else{
+    totalPercent = Math.floor((dustTotalValue*2)*0.1)+'%';
+    document.querySelector('.percent').innerHTML = `
+    <div class="khai">통합대기지수<i class="fa-solid fa-circle-question"></i></div>
+    <i class="fa-solid fa-earth-asia"></i>${totalPercent}
+    `;
+  }
 
   let emoji = document.querySelector('.total_emoji');
   let emotionColor =  document.querySelectorAll('#container .dust_condition dl');
@@ -305,9 +322,15 @@ function statusNowUI(data){
     let emojiIdx = item.childNodes[5].innerText;
     item.style.backgroundColor = statusColor[dustLv.indexOf(emojiIdx)];
   });
-  emoji.innerHTML = `<i class="fa-regular fa-face-${statusEmoji[dustTotalGrade-1]}"></i>`
-  emoji.querySelector('i').style.color = statusColor[dustTotalGrade-1];
-  document.querySelector('.total_status').innerHTML = dustLv[dustTotalGrade-1];
+  if(!dustTotalGrade || dustTotalGrade=='-' || dustTotalGrade=='통신장애'){
+    emoji.innerHTML = `<i class="fa-regular fa-face-flushed"></i>`
+    emoji.querySelector('i').style.color = 'gray';
+    document.querySelector('.total_status').innerHTML = '???';
+  }else{
+    emoji.innerHTML = `<i class="fa-regular fa-face-${statusEmoji[dustTotalGrade-1]}"></i>`
+    emoji.querySelector('i').style.color = statusColor[dustTotalGrade-1];
+    document.querySelector('.total_status').innerHTML = dustLv[dustTotalGrade-1];
+  }
 }
 
 // 지역 선택하는 select
@@ -317,24 +340,43 @@ function choiceSelect(){
 
 // 대기오염 리스트를 출력하는 함수
 function dustListUI(dustValue, dustGrade){
+  dustContent = ''; // 검색시 초기화
   dustContent = `
   <ul>
     <li class="on">
   `
-for(let i=0;i<dustValue.length;i++){
-  dustContent += `
-      <dl>
-        <dt class="type">${dustName[i]}</dt>
-        <dd><i class="fa-regular fa-face-${statusEmoji[dustGrade[i]]}"></i></dd>
-        <dd class="status">${dustLv[dustGrade[i]]}</dd>
-        <dd class="unit">${dustValue[i]}</dd>
-      </dl>`
-      // 3개씩 나눠서 pagenation / 하지만 마지막에도 해당 태그가 붙으면 안됨
-  if((i+1)%3==0 && (i+1)<dustValue.length){
+for(let i=0;i<6;i++){
+  // 값을 불러올 수 없을 때
+  if(dustValue.length==0){
     dustContent += `
-    </li>
-    <li>
-    `
+        <dl class="null_data">
+          <dt class="type">${dustName[i]}</dt>
+          <dd><i class="fa-regular fa-face-flushed"></i></dd>
+          <dd class="status">???</dd>
+          <dd class="unit">데이터 없음</dd>
+        </dl>`
+        // 3개씩 나눠서 pagenation / 하지만 마지막에도 해당 태그가 붙으면 안됨
+    if((i+1)%3==0 && (i+1)<dustValue.length){
+      dustContent += `
+      </li>
+      <li>
+      `
+    }
+  }else{ // 값을 무사히 받았을 때
+    dustContent += `
+        <dl>
+          <dt class="type">${dustName[i]}</dt>
+          <dd><i class="fa-regular fa-face-${statusEmoji[dustGrade[i]]}"></i></dd>
+          <dd class="status">${dustLv[dustGrade[i]]}</dd>
+          <dd class="unit">${dustValue[i]}</dd>
+        </dl>`
+        // 3개씩 나눠서 pagenation / 하지만 마지막에도 해당 태그가 붙으면 안됨
+    if((i+1)%3==0 && (i+1)<dustValue.length){
+      dustContent += `
+      </li>
+      <li>
+      `
+    }
   }
 }
 dustContent += `
@@ -345,14 +387,21 @@ document.querySelector('.dust_condition').innerHTML = dustContent;
 
 // 모든 grade, value를 정리해주는 함수
 function allDust(data, i){
+  // 검색 시 초기화
+  dustGrade = [];
+  dustValue = [];
   for(let k=0;k<dustType.length;k++){
     let grade = dustType[k]+'Grade';
     let value = dustType[k]+'Value';
-    dustGrade.push(data[i][grade]);
-    if(k<2){
-      dustValue.push(data[i][value]+unitPm);
+    if(!data[i][value] || data[i][value]=='-' || data[i][value]=='통신장애'){
+      dustGrade = null;
     }else{
-      dustValue.push(data[i][value]+unitPpm);
+      dustGrade.push(data[i][grade]);
+      if(k<2){
+        dustValue.push(data[i][value]+unitPm);
+      }else{
+        dustValue.push(data[i][value]+unitPpm);
+      }
     }
   }
 }
@@ -397,6 +446,7 @@ function reAppear(){
 
 // 검색창
 // select로 city 선택
+let selectedValue = '';
 function selectCity(local){
   const inputCity = document.querySelector('select.addr_city');
   for(i=0;i<local.length;i++){
@@ -412,9 +462,9 @@ function selectCity(local){
   // 선택 시, 재 출력이 되지 않는다.
   // let cityValue = inputCity.options[city.selectedIndex].value;
   const selectElement = document.querySelector('.addr_city');
-  let selectedValue = '';
   selectElement.addEventListener('change', (event)=>{
     selectedValue = event.target.value;
+    document.querySelector('.input_search').value = '';
     matchingRegion(selectedValue);
   });
 
@@ -440,20 +490,44 @@ function selectCity(local){
         }
         dataList += `</datalist>`
         addData.innerHTML = dataList;
-        const region = document.querySelectorAll('#search_list option')
-        for(m=0;m<region.length;m++){
-          console.log(region[m].value);
-        }
       }
       getRegionData();
   };
-
-
-
-
-
-
-  
-
-  
 }
+//이벤트 리스너가 함수안에서 계속 실행되면 겹치므로 빼줌.
+const searchBtn = ()=>{
+  // 클릭 시, 지역 값이 없을 때
+  const searchClick = document.querySelector('.search_btn');
+  const warnMsg = document.querySelector('.warn_msg');
+  searchClick.addEventListener('click', (e)=>{
+    e.preventDefault(); // 버블링 막기
+    if(!selectedValue){
+      warnMsg.innerText = '지역이 선택되지 않았습니다.'
+      warnMsg.classList.remove('hidden');
+      warnMsg.style.fontSize = '12px';
+    }else{
+      const region = document.querySelectorAll('#search_list option')
+    let regions = [];
+    for(m=0;m<region.length;m++){
+      regions.push(region[m].value);
+    }
+
+    // 이벤트리스너 내부에 정의해줘야 value값을 가져올 수 있음.
+    const searchRegion = document.querySelector('.input_search').value;
+    if(regions.indexOf(searchRegion)==-1){
+      // 나중에 위도 경도 유사한 측정소의 값을 가져올 것 (현재는 임시)
+      warnMsg.innerText = '목록에 있는 주소를 선택해주세요.';
+      warnMsg.classList.remove('hidden');
+      warnMsg.style.fontSize = '12px'; 
+    }else{
+      warnMsg.classList.add('hidden');
+      warnMsg.style.fontSize = '0';
+      document.querySelector('.input_search').value = '';
+
+      document.querySelector('.menu_list').classList.remove('active');
+      searchAddressToCoordinate(`${selectedValue} ${searchRegion}`);
+    }
+    }
+  });
+};
+searchBtn();

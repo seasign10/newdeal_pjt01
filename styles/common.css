@@ -10,12 +10,17 @@ span{text-align: center;display: inline-block;}
 /* styles */
 /* 상단 */
 #header{
+  width: 100%;
   height: 68px;
   background-color: #33743b;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: relative;
+  position: fixed;
+  top: 0;
+  /* 지도api의 네이버 로고가 z-index값이 높아서 가려주기 위함 */
+  z-index: 999;
 }
 #header .menu_bar{
   font-size: 36px;
@@ -74,6 +79,7 @@ span{text-align: center;display: inline-block;}
 }
 #header .menu_list .menu_icon{
   background-color: #172e12;
+  text-align: end;
 }
 #header .menu_list i{
   padding: 1rem;
@@ -102,7 +108,7 @@ span{text-align: center;display: inline-block;}
   border: 1px solid #33743b;
   width: 140px;
 }
-#header .search>button{
+#header .search .search_btn{
   width: 60px;
   border: 0;
   padding: 0.7rem;
@@ -111,15 +117,15 @@ span{text-align: center;display: inline-block;}
   color: #fff;
   margin-left: 0.5rem;
 }
-#header .search>button:hover{
+#header .search .search_btn:hover{
   background-color: #172e12;
   cursor: pointer;
 }
 
 #header .search h3{
   margin-bottom: 0.7rem;
-  font-weight: bold;
-  color: #172e12;
+  font-weight: 100;
+  color: #485745;
   font-size: 20px;
 }
 #header .web_name{
@@ -132,8 +138,20 @@ span{text-align: center;display: inline-block;}
 
 
 /* 중단 - 미세먼지 */
-#container{display: flex;margin: 3rem auto;justify-content: space-around;flex-wrap: wrap;}
-section.dust{display: flex;flex-direction: column;align-items: center;}
+#container{
+  display: flex;
+  margin: 8rem auto 3rem auto;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  position: relative;
+}
+section.dust{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 45%;
+  min-width: 492px;
+}
 #container .total_condition{
   display: flex;
   flex-direction: column;
@@ -161,6 +179,18 @@ section.dust{display: flex;flex-direction: column;align-items: center;}
 #container .total_condition .percent {
   font-size: 20px;
   position: relative;
+  text-align: center;
+  margin-top: 1rem;
+}
+#container .total_condition .percent .khai {
+  font-size: 20px;
+  font-weight: 700;
+  /* color: rgb(39, 38, 38); */
+}
+#container .total_condition .percent i {
+  margin-right: 0.1rem;
+  margin-top: 0.3rem;
+  font-size: 20px;
 }
 #container .total_condition .query_box {
   display: none;
@@ -189,11 +219,6 @@ section.dust{display: flex;flex-direction: column;align-items: center;}
   margin-top: 0.2rem;
   color: #854c3e;
 }
-#container .total_condition .percent i {
-  margin-right: 0.2rem;
-  margin-top: 0.3rem;
-  font-size: 20px;
-}
 
 #container .dust_condition>ul{
   display: flex;
@@ -208,11 +233,14 @@ section.dust{display: flex;flex-direction: column;align-items: center;}
 #container .dust_condition>ul>li.on{
 }
 #container .dust_condition dl{
-  width: 100px;
+  width: 92px;
   margin: 1rem 0.5rem;
   padding: 0.8rem;
   border-radius: 20px;
   color: #fff;
+}
+#container .dust_condition dl.null_data{
+  background-color: gray;
 }
 #container .dust_condition dt{text-align: center;}
 #container .dust_condition dd{text-align: center;}
@@ -247,7 +275,12 @@ section.dust{display: flex;flex-direction: column;align-items: center;}
 }
 
 /* 중단 - 날씨 */
-#container .weather{width: 400px;background-color: blue;height: 700px;}
+#container .weather{
+  width: 492px;
+  min-width: 45%;
+  background-color: blue;
+  height: 700px;
+}
 
 
 /* 하단 */
@@ -257,8 +290,9 @@ section.dust{display: flex;flex-direction: column;align-items: center;}
 /* 편의성 및 접근성 style */
 .fa-circle-question{margin-left: 0.3rem;color: orange;cursor: pointer;font-size: 24px;}
 .fa-circle-question:hover{color: rgb(255, 98, 0);}
+.warn_msg{color: red;margin-top: 0.5rem;}
 .wait{display: none;}
-.wait.active{display: flex;flex-direction: column;align-items: center;}
+.wait.active{display: flex;flex-direction: column;align-items: center;position: absolute; top: 1rem;}
 .wait>span{font-size: 28px;font-weight: 700;color: rgb(30, 29, 29);font-style: italic;}
 .wait>i{margin-left: 0.2rem;color: silver;font-size: 32px;margin-bottom: 1rem;}
 /* rotate_image 라는 이름을 가진 키프레임을 실행

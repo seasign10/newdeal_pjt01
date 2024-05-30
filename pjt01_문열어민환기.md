@@ -5,6 +5,7 @@
    - **사용된 API** : Naver
      - Naver mpas 3v
 2. **환경** : `HTML5` &`CSS3` &  `VanilaJs` 
+2. 미세먼지 측정지역이 아닌 곳은 경도 위도가 가장 가까운 곳에서 유사 데이터를 뽑아오는 것으로 추측, 우선 일치하는 지역만 가져올 수 있도록 한 후, 마지막에 개선
 
 
 
@@ -282,6 +283,195 @@ const local = [
 
 
 
-- 미세먼지 측정지역이 아닌 곳은 경도 위도가 가장 가까운 곳에서 유사 데이터를 뽑아오는 것 같다. 
-  이 문제를 해결하는 것은 가장 마지막에 추가해보자.
+- 중복으로 인한 버벅임 해결
+  기존 코드에서는 이벤트 리스너가 `change` 될 때마다 `metchingRegions` 내의 `getRegionData` 비동기 요청을 하게된다.
+
+  ```js
+  selectElement.addEventListener('change', (event)=>{
+      selectedValue = event.target.value;
+      selectCities.value = '';
+      matchingRegion(selectedValue);
+    });
+  
+    function matchingRegion(v){ // 제대로 값이 받아지는 것을 확인
+      let localCode = '';
+      for(let i=0;i<local.length;i++){
+        if(local[i].name==v){
+          localCode = local[i].code;
+        }}...
+        const getRegionData = async ()=>{
+  ```
+
+  - 수정 코드
+
+  ```js
+  const selectElement = document.querySelector('.addr_city');
+    const selectCities = document.querySelector('.input_search');
+  
+    let currentRequestId = 0; //현재요청 ID
+    selectElement.addEventListener('change', async(event)=>{
+      selectedValue = event.target.value;
+      selectCities.value = '';
+      await matchingRegion(selectedValue);
+    });
+  
+    async function matchingRegion(v){ // 제대로 값이 받아지는 것을 확인
+      let localCode = '';
+      for(let i=0;i<local.length;i++){
+        if(local[i].name==v){
+          localCode = local[i].code;
+        }}
+  
+        // 요청 ID 증가
+        const requestId = ++currentRequestId;
+        try{
+          // 지역을 받고 > url 다시 요청, 데이터 값 받아서 region 값을 다 리스트에 담기 > datalist를 출력,
+          const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
+          const response = await fetch(url);
+          if(!response.ok){
+            throw new Error('서버에서 데이터를 가져오는데 실패했습니다.');
+          }
+            const data = await response.json();
+  
+            // 여기서 확인 : 현재 요청 ID가 최신인지
+            if(requestId!==currentRequestId){
+              // 최신이 아니면 처리를 중단
+              return
+            }
+  
+            // 여기에 데이터 처리 로직 추가
+            console.log(data); // 예시 출력
+  
+            let localDust = data.response.body.items;
+            // 이제 검색창에 띄워주기
+    
+            // datalist 생성
+            const addData = document.querySelector('.search_select');
+            let dataList = `<datalist id="search_list">`
+            for(let k=0;k<localDust.length;k++){
+              dataList += `<option value="${localDust[k].stationName}" />`
+            }
+            dataList += `</datalist>`
+            addData.innerHTML = dataList;
+    
+        } catch(error){
+          console.error('에러 발생', error);
+        }
+    };
+  }
+  ```
+
+  1. **요청 ID 확인 위치 수정**: `if (requestId !== currentRequestId)` 조건을 데이터 처리 전에 체크하도록 수정 :arrow_forward: 중복된 비동기 요청이 발생하더라도 최신 요청만 처리
+  2. **에러 메시지 출력**: 서버에서 데이터를 가져오는 데 실패했을 때의 에러 메시지를 명확히 출력하도록 `throw new Error` 부분을 유지 :arrow_forward: 코드가 비동기 요청의 중복을 제대로 관리하고, 에러 발생 시 적절히 처리
+     :red_circle: `console.log` 로 확인해본 결과, 요청이 너무 빠르면 로직 내의 `const requestId = ++currentRequestId;` && `*if*(requestId!==currentRequestId){` 가 속도를 따라갈 수 없으므로 return이 되어 코드에 안정성을 주는 것 같음.
+
+  -  하지만 여전히 반복 실행이 되므로, 확인 필요. (두번째 요청시 request가 두번 값을 가져오는 것을 확인)
+
+    `await matchingRegion(selectedValue, local);` 
+    `async function matchingRegion(v, local){...` 함수를 `function selectCity(local){` 외부로 빼준다.
+
+  ```js
+  let selectedValue = '';
+  let currentRequestId = 0; //현재요청 ID
+  function selectCity(local){
+    ...
+    const selectElement = document.querySelector('.addr_city');
+    selectElement.addEventListener('change', async(event)=>{
+      selectedValue = event.target.value;
+      const selectCities = document.querySelector('.input_search');
+      selectCities.value = '';
+      await matchingRegion(selectedValue, local);
+    });
+  }
+  
+  async function matchingRegion(v, local){ 
+    let localCode = '';
+    ...
+  ```
+
+  -  `selectCity` 함수 내에서 이벤트 리스너는 한 번만 등록 
+  - 이벤트 리스너가 중복으로 등록되지 않아 `request`가 계속 증가하는 문제를 해결
+    1. 이벤트 리스너 내부에서 해당 함수를 호출하는 것 자체가 중복을 **완전히 없애는 것은 아님**
+    2. 이벤트가 발생할 때마다 `handleEvent` 함수가 호출되지만, `handleEvent` 함수의 정의는 단 한 번만 작성되므로 코드의 중복은 :arrow_down:
+    3. 즉, 이벤트 리스너 내부에서 함수가 호출되는 것은 맞지만, 함수를 바깥으로 빼내어 정의함으로써 중복을 줄이고, 코드의 재사용성을 높이는 효과
+    4. 이벤트 리스너 내에서 직접 로직을 작성하는 것보다 함수를 바깥으로 분리하여 호출하는 방식이 효율적
+
+
+
+- 네이버 API사용 시, 도로명은 위치반환을 해주지 않는 것을 확인
+
+  - **외부 주소 API**를 가져와서 결합해보자.
+
+  1. 브이월드 검색 API : https://www.vworld.kr/dev/v4dv_search2_s001.do
+  2. 참고 예제 : https://jsbin.com/bepajecipo/edit?html,output
+
+  - 해당 코드를 불러오면 `cors` 에러가 뜬다.
+
+    1. api를 허용한 url 과 일치하지 않아서 생기는 것을 보아하니, api 신청 url과는 무관한 듯
+    2. 백엔드 서버에서 우회하거나, 로컬서버가 아닌 웹서버를 시도해보거나 jsonp우회방법 세가지가 있다.
+
+    - 이 중 **jsonp** 방법을 선택
+
+    ```html
+      <!-- ajax를 사용하기 위한 jquery script를 가져온다. -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script defer src="./script/main.js"></script>
+    	...
+    </head>
+    <body>
+      ...
+    ```
+
+    ```js
+    let  callAjax = function(){
+    	const queryLocation = '판교로';
+    	let  data = `service=search&request=search&version=2.0&size=10&page=1&query=${queryLocation}&type=road&format=json&errorformat=json&key=${VWORLD_API_KEY}`
+    	$.ajax({
+    		type: "get",
+    		url: "https://api.vworld.kr/req/search",
+    		data : data,
+    		dataType: 'jsonp',
+    		async: true,
+    		success: function(data){
+    				console.log(data);
+    			 },
+    		error: function(xhr, stat, err){}
+    	});
+    }
+    callAjax();
+    ```
+
+    - 주소 값을 다듬어서 사용
+
+      ```js
+      success: function(data){
+      				const item =  data.response.result.items;
+              let region = '';
+              // city에 속하는 지역명 뽑기
+              for(let i=0;i<sizeCnt;i++){
+                if(item[i].district.indexOf(city)>-1){
+                  region = item[i].district;
+                  // break; // return을 사용하면 함수밖으로 빠져나가기 때문에
+                }
+              }
+              if(region.indexOf('(')==-1){
+                // 가장 마지막 단어를 주소로 입력
+                const regionAddr = region.split(' ');
+                // console.log(regionAddr.slice(-1)); // objecy
+                // console.log(regionAddr[regionAddr.length-1]); // string
+      
+                // 사용할 값은 string이 더 적절한 것 같으므로
+                const findRegion = regionAddr[regionAddr.length-1];
+                searchAddressToCoordinate(`${city} ${findRegion}`);
+                
+              }else{// 괄호가 있을시, 괄호의 주소를 가져옴
+                const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
+                const lastIdx =  region.indexOf(')');
+                findRegion = region.slice(firstIdx+1, lastIdx);
+                searchAddressToCoordinate(`${city} ${findRegion}`);
+              }
+      			 },
+      ```
+
+      
 

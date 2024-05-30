@@ -167,6 +167,7 @@ async function asyncNaverAPI(){
         updateInfo(addrCity, addrRegion);
 
         getData();
+        getWeatherData(addrCity, addrRegion);
         }
       );
     }
@@ -183,10 +184,16 @@ function searchAddressToCoordinate(address){
     // 주소를 도로명으로 찾을 때, 건물명까지 입력하지 않으면 응답받지 못한다.
     if (response.v2.meta.totalCount === 0) {
       // return alert('totalCount' + response.v2.meta.totalCount);
-      return alert('도로명 주소는 찾을 수 없습니다.');
+      // 찾을 수 없는 주소를 여기서 도로명 api로 처리 하기 : address
+      address = address.split(' ');
+      const city = address[0];
+      const region = address[1];
+      // 도로명 함수에 삽입
+      callAjax(city, region);
+      return;
+      // return alert('도로명 주소는 찾을 수 없습니다.');
     }
       item = response.v2.addresses[0];
-      console.log(item)
       // 좌표
       // point = new naver.maps.Point(item.x, item.y);
       let pointMove = new naver.maps.LatLng(item.y, item.x)
@@ -243,6 +250,7 @@ const getData = async ()=>{
   statusNowUI(localDust);
   timeNow();
   wait();
+  document.querySelector('.tap').classList.add('active')
   const queryBtn = document.querySelector('.fa-circle-question');
   queryBtn.innerHTML += `
     <dl class="query_box">
@@ -304,16 +312,37 @@ function statusNowUI(data){
   // console.log(dustTotalValue); // 수치를 가공해서 퍼센테이지로 대기수준을 표시하고 싶음.
   if(!dustTotalValue || dustTotalValue=='-' || dustTotalValue=='통신장애'){
     document.querySelector('.percent').innerHTML = `
+    <div class="ventilation">현재 정보가 잡히지 않아요!</div>
     <div class="khai">통합대기지수<i class="fa-solid fa-circle-question"></i></div>
     <i class="fa-solid fa-earth-asia"></i>
     No Data
     `;
   }else{
     totalPercent = Math.floor((dustTotalValue*2)*0.1)+'%';
+
+    let venMsg = '';
+    if(dustTotalGrade<3){
+      venMsg = '아침 점심 저녁 세번! <br /> 얼른 환기하세요!'
+    }else if(dustTotalGrade==3){
+      venMsg = '30분 환기 추천해요.'
+    }else if(dustTotalGrade==4){
+      venMsg = '외출을 삼가세요! 짧게 3~5분 환기 추천해요.'
+    }
     document.querySelector('.percent').innerHTML = `
+    <div class="ventilation">${venMsg}</div>
     <div class="khai">통합대기지수<i class="fa-solid fa-circle-question"></i></div>
     <i class="fa-solid fa-earth-asia"></i>${totalPercent}
     `;
+    const msgColor = document.querySelector('.ventilation');
+    if(dustTotalGrade==1){
+      msgColor.style.color = '#0062ff';
+    }else if(dustTotalGrade==2){
+      msgColor.style.color = 'green';
+    }else if(dustTotalGrade==3){
+      msgColor.style.color = 'orange';
+    }else{
+      msgColor.style.color = 'red';
+    }
   }
 
   let emoji = document.querySelector('.total_emoji');
@@ -347,7 +376,8 @@ function dustListUI(dustValue, dustGrade){
   `
 for(let i=0;i<6;i++){
   // 값을 불러올 수 없을 때
-  if(dustValue.length==0){
+  const condition = !dustValue[i] || !dustGrade[i] || dustValue[i]=='-' || dustValue[i]=='통신장애' || dustGrade[i]=='-' || dustGrade[i]=='통신장애'
+  if(condition){
     dustContent += `
         <dl class="null_data">
           <dt class="type">${dustName[i]}</dt>
@@ -431,6 +461,13 @@ function menuList(menu, menuBtn, menuInBtn){
   menuInBtn.addEventListener('click', ()=>{
     menu.classList.remove('active');
   });
+
+  // menu.addEventListener('mouseleave', ()=>{
+  //   console.log('leave')
+  //   setTimeout(()=>{
+  //     menu.classList.remove('active');
+  //   },1000);
+  // });
 }
 // 메뉴도 랜더링 될 동안 wait 알려주기
 const menuChange = document.querySelector('.fa-bars');
@@ -447,6 +484,7 @@ function reAppear(){
 // 검색창
 // select로 city 선택
 let selectedValue = '';
+let currentRequestId = 0; //현재요청 ID
 function selectCity(local){
   const inputCity = document.querySelector('select.addr_city');
   for(i=0;i<local.length;i++){
@@ -462,43 +500,73 @@ function selectCity(local){
   // 선택 시, 재 출력이 되지 않는다.
   // let cityValue = inputCity.options[city.selectedIndex].value;
   const selectElement = document.querySelector('.addr_city');
-  selectElement.addEventListener('change', (event)=>{
-    selectedValue = event.target.value;
-    document.querySelector('.input_search').value = '';
-    matchingRegion(selectedValue);
-  });
+  selectElement.addEventListener('change', async(event)=>{
 
-  function matchingRegion(v){ // 제대로 값이 받아지는 것을 확인
-    let localCode = '';
-    for(i=0;i<local.length;i++){
-      if(local[i].name==v){
-        localCode = local[i].code;
-      }}
+    event.preventDefault()
+    selectedValue = event.target.value;
+    const selectCities = document.querySelector('.input_search');
+    selectCities.value = '';
+    await matchingRegion(selectedValue, local);
+  });
+}
+
+// slectCity 함수에 들어가있으면, 이벤트 리스너가 여러번 등록되는 것을 방지
+async function matchingRegion(v, local){ // 제대로 값이 받아지는 것을 확인
+  let localCode = '';
+  for(let i=0;i<local.length;i++){
+    if(local[i].name==v){
+      localCode = local[i].code;
+    }}
+
+    // 요청 ID 증가
+    const requestId = ++currentRequestId;
+    try{
       // 지역을 받고 > url 다시 요청, 데이터 값 받아서 region 값을 다 리스트에 담기 > datalist를 출력,
-      const getRegionData = async ()=>{
-        url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
-      
-        const response = await fetch(url);
+      const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
+      const response = await fetch(url);
+      if(!response.ok){
+        throw new Error('서버에서 데이터를 가져오는데 실패했습니다.');
+      }
         const data = await response.json();
+
+        // 여기서 확인 : 현재 요청 ID가 최신인지
+        if(requestId!==currentRequestId){
+          // 최신이 아니면 처리를 중단
+          return
+        }
+
+        // 여기에 데이터 처리 로직 추가
+        // console.log(data); // 예시 출력
+
         let localDust = data.response.body.items;
         // 이제 검색창에 띄워주기
 
+        // datalist 생성
+        // 시각적 편의를 위해 정렬
         const addData = document.querySelector('.search_select');
+        let sortData = [];
+        for(let k=0;k<localDust.length;k++){
+          sortData.push(localDust[k].stationName);
+        }
+        sortData = sortData.sort();
+
+        // 정렬한 데이터 삽입
         let dataList = `<datalist id="search_list">`
-        for(k=0;k<localDust.length;k++){
-          dataList += `<option value="${localDust[k].stationName}" />`
+        for(let k=0;k<localDust.length;k++){
+          dataList += `<option value="${sortData[k]}" />`
         }
         dataList += `</datalist>`
         addData.innerHTML = dataList;
-      }
-      getRegionData();
-  };
-}
+
+    } catch(error){
+      console.error('에러 발생', error);
+    }
+};
 //이벤트 리스너가 함수안에서 계속 실행되면 겹치므로 빼줌.
+const searchClick = document.querySelector('.search_btn');
+const warnMsg = document.querySelector('.warn_msg');
 const searchBtn = ()=>{
   // 클릭 시, 지역 값이 없을 때
-  const searchClick = document.querySelector('.search_btn');
-  const warnMsg = document.querySelector('.warn_msg');
   searchClick.addEventListener('click', (e)=>{
     e.preventDefault(); // 버블링 막기
     if(!selectedValue){
@@ -508,7 +576,7 @@ const searchBtn = ()=>{
     }else{
       const region = document.querySelectorAll('#search_list option')
     let regions = [];
-    for(m=0;m<region.length;m++){
+    for(let m=0;m<region.length;m++){
       regions.push(region[m].value);
     }
 
@@ -519,15 +587,125 @@ const searchBtn = ()=>{
       warnMsg.innerText = '목록에 있는 주소를 선택해주세요.';
       warnMsg.classList.remove('hidden');
       warnMsg.style.fontSize = '12px'; 
-    }else{
+    }else{// 값이 존재한다면 값을 넘기자.
+      // 경고 문구 삭제 및, 검색되면 메뉴창 집어넣기
       warnMsg.classList.add('hidden');
       warnMsg.style.fontSize = '0';
       document.querySelector('.input_search').value = '';
 
-      document.querySelector('.menu_list').classList.remove('active');
-      searchAddressToCoordinate(`${selectedValue} ${searchRegion}`);
+      // 간혹 ()이 들어간 문구들이 있음. 이 자료를 정리해서 보내자.
+      const delTxtIdx = searchRegion.indexOf('('); // 숫자
+      let region = '';
+        if (delTxtIdx !== -1) {
+          region = searchRegion.slice(0, delTxtIdx);
+        } else {
+          region = searchRegion;
+        }
+        document.querySelector('.menu_list').classList.remove('active');
+        searchAddressToCoordinate(`${selectedValue} ${region}`);
+        getWeatherData(selectedValue, region)
+        
     }
     }
   });
 };
 searchBtn();
+
+// 도로명을 검색할 수 있는 api
+let  callAjax = function(city, queryLocation){
+  // 주소 값에 지역 까지 들어가면 검색이 되지 않음.
+  const sizeCnt = 20;
+	let  data = `service=search&request=search&version=2.0&size=${sizeCnt}&page=1&query=${queryLocation}&type=road&format=json&errorformat=json&key=${VWORLD_API_KEY}`
+
+	$.ajax({
+		type: "get",
+		url: "https://api.vworld.kr/req/search",
+		data : data,
+		dataType: 'jsonp',
+		async: true,
+		success: function(data){
+				const item =  data.response.result.items;
+        let region = '';
+        // city에 속하는 지역명 뽑기
+        for(let i=0;i<sizeCnt;i++){
+          if(item[i].district.indexOf(city)>-1){
+            region = item[i].district;
+            // break; // return을 사용하면 함수밖으로 빠져나가기 때문에
+          }
+        }
+        if(region.indexOf('(')==-1){
+          // 가장 마지막 단어를 주소로 입력
+          const regionAddr = region.split(' ');
+          // console.log(regionAddr.slice(-1)); // objecy
+          // console.log(regionAddr[regionAddr.length-1]); // string
+
+          // 사용할 값은 string이 더 적절한 것 같으므로
+          const findRegion = regionAddr[regionAddr.length-1];
+          searchAddressToCoordinate(`${city} ${findRegion}`);
+          
+        }else{// 괄호가 있을시, 괄호의 주소를 가져옴
+          const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
+          const lastIdx =  region.indexOf(')');
+          findRegion = region.slice(firstIdx+1, lastIdx);
+          searchAddressToCoordinate(`${city} ${findRegion}`);
+        }
+			 },
+		error: function(xhr, stat, err){}
+	});
+}
+
+////////////////////// 날씨 데이터 ///////////////////////
+// 탭 : classList 를 사용 (display none X)
+const tap = document.querySelectorAll('.tap h2');
+const tapDisplay = document.querySelectorAll('.container_box section');
+const tapClick = function(){
+  for(let i=0;i<tap.length;i++){
+    tap[i].addEventListener('click', ()=>{
+      for(let k=0;k<tap.length;k++){
+        tap[k].classList.remove('on');
+        tapDisplay[k].classList.remove('on');
+      }
+      tap[i].classList.add('on');
+      tapDisplay[i].classList.add('on');
+    });
+  }
+};
+tapClick()
+
+let cityCodeList = [];
+const getDataJson = ()=>{
+  fetch('./script/data.json')
+  .then((res)=>{
+    return res.json()
+  })
+  .then((obj)=>{
+    cityCodeList = obj.items;
+  })
+};
+getDataJson()
+
+const getWeatherData = async(addrCity, addrRegion)=>{
+  let cityId = '';
+  for(let i=0;i<cityCodeList.length;i++){
+    if(cityCodeList[i].Name==addrCity){
+      cityId = cityCodeList[i].Code;
+    }else if(cityCodeList[i].Name.indexOf(addrRegion)!=-1){
+      cityId = cityCodeList[i].Code;
+      console.log(cityCodeList[i].Name);
+    }
+  }
+  const url = new URL(`https://apis.data.go.kr/1360000/MidFcstInfoService/getMidLandFcst?serviceKey=${API_KEY}&pageNo=1&numOfRows=10&dataType=json&regId=${cityId}&tmFc=202405300600`);
+  await fetch(url)
+  .then(response=>{
+    if(!response.ok){
+      throw new Error('네트워크가 원활하지 않습니다.');
+    }
+    return response.json();
+  })
+  .then(data=>{
+    console.log(data.response.body.items.item);
+  })
+  .catch(error=>{
+    console.error('There has been a problem with your fetch operation:', error)
+  });
+}

@@ -140,10 +140,39 @@ span{text-align: center;display: inline-block;}
 /* 중단 - 미세먼지 */
 #container{
   display: flex;
+  flex-direction: column;
+  align-items: center;
   margin: 8rem auto 3rem auto;
+  height: 1210px;
+}
+#container .tap{
+  display: none;
+  /* width: 492px; */
+}
+#container .tap h2{
+  padding: 0.7rem 0.5rem;
+  font-size: 24px;
+  width: 100px;
+  text-align: center;
+  margin-bottom: 3rem;
+  cursor: pointer;
+}
+#container .tap h2:hover{
+  background-color: #dbefc8;
+}
+#container .tap h2.on{
+  font-weight: 700;
+  border-bottom: 4px solid black;
+}
+#container .tap.active{
+  display: flex;
+}
+#container .container_box{
+  display: flex;
   justify-content: space-around;
   flex-wrap: wrap;
   position: relative;
+  width: 100%;
 }
 section.dust{
   display: flex;
@@ -183,8 +212,9 @@ section.dust{
   margin-top: 1rem;
 }
 #container .total_condition .percent .khai {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
+  color: rgb(255, 144, 100);
   /* color: rgb(39, 38, 38); */
 }
 #container .total_condition .percent i {
@@ -197,8 +227,8 @@ section.dust{
 }
 #container .total_condition .query_box.on {
   position: absolute;
-  top: -80px;
-  left: 120px;
+  top: 40px;
+  left: 140px;
   padding: 0.5rem;
   display: inline-block;
   white-space: nowrap;
@@ -291,6 +321,7 @@ section.dust{
 .fa-circle-question{margin-left: 0.3rem;color: orange;cursor: pointer;font-size: 24px;}
 .fa-circle-question:hover{color: rgb(255, 98, 0);}
 .warn_msg{color: red;margin-top: 0.5rem;}
+.ventilation{color: gray;font-size: 16px;margin-bottom: 1rem;}
 .wait{display: none;}
 .wait.active{display: flex;flex-direction: column;align-items: center;position: absolute; top: 1rem;}
 .wait>span{font-size: 28px;font-weight: 700;color: rgb(30, 29, 29);font-style: italic;}
@@ -302,5 +333,29 @@ section.dust{
 @keyframes rotate_icon{
   100% {
     transform: rotate(360deg);
+  }
+}
+
+/* 반응형 */
+@media(max-width: 998px){
+  /* 날씨와 미세먼지를 탭으로 보여줄 것 */
+  section.weather.on{
+    position: absolute;
+    display: flex;
+  }
+  section.weather{
+    display: none;
+  }
+  section.dust.on{
+    display: flex;
+  }
+  section.dust{
+    display: none;
+  }
+}
+
+@media(min-width: 999px){
+  #container .tap.active{
+    display: none;
   }
 }

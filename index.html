@@ -6,6 +6,9 @@
   <title>문열어 민환기</title>
   <link rel="icon" href="./src/favicon.ico">
   <link rel="stylesheet" href="./styles/common.css">
+  <!-- ajax > jsonp 를 이용하여 cors 우회하기 위함(백엔드가 구축되지 않았기 때문에) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
   <script src="https://kit.fontawesome.com/e7c9242ec2.js" crossorigin="anonymous"></script>
   <!-- 인증키 -->
   <script defer src="./script/apikey.js"></script>
@@ -41,23 +44,31 @@
   </header>
   
   <div id="container" class="container">
-    <section class="dust">
-      <div class="wait active"><h3 class="hidden">미세먼지 페이지 불러오는 중</h3><i class="fa-solid fa-circle-notch"></i><span>오늘의 미세먼지는?</span></div>
-      <!-- 통합대기 -->
-      <div class="total_condition">
-        <h1 class="hidden">현재 통합대기 미세먼지</h1>
-        <span class="current_location"></span>
-        <span class="cuttent_time"></span>
-        <span class="total_emoji"></span>
-        <span class="total_status"></span>
-        <span class="percent"></span>
-      </div>
-      <!-- 종류별 -->
-      <div class="dust_condition"></div>
-      <!-- 지도 -->
-      <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
-    </section>
-    <section class="weather" style="font-size: 40px;color: aliceblue;">날씨 데이터</section>
+    <div class="tap">
+      <h2 class="on animated">미세먼지</h2>
+      <h2 class="animated">날씨</h2>
+    </div>
+    <div class="container_box">
+      <section class="dust on">
+        <div class="wait active">
+          <h3 class="hidden">미세먼지 페이지 불러오는 중</h3><i class="fa-solid fa-circle-notch"></i><span>오늘의 미세먼지는?</span>
+        </div>
+        <!-- 통합대기 -->
+        <div class="total_condition">
+          <h1 class="hidden">현재 통합대기 미세먼지</h1>
+          <span class="current_location"></span>
+          <span class="cuttent_time"></span>
+          <span class="total_emoji"></span>
+          <span class="total_status"></span>
+          <span class="percent"></span>
+        </div>
+        <!-- 종류별 -->
+        <div class="dust_condition"></div>
+        <!-- 지도 -->
+        <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
+      </section>
+      <section class="weather" style="font-size: 40px;color: aliceblue;">날씨 데이터</section>
+    </div>
   </div>
 
   <footer id="footer"></footer>

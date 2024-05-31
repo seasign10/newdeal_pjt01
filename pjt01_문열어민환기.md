@@ -539,7 +539,9 @@ const local = [
     }
   ```
 
-  - 역이름을 검색하면 도로명도 지번도 아니기 때문에 검색이 되지않는다. `역` 을 `slice(-1)` 조건으로 추가
+  - 역이름을 검색하면 도로명도 지번도 아니기 때문에 검색이 되지않는다. `역` 을 `slice(-1)` 조건으로 추가 + `도`
+
+  - `항` 은 검색 및 `response.ok` 이므로 수정 :x:  
 
     ```js
     const delTxtIdx = searchRegion.indexOf('('); // 숫자
@@ -550,6 +552,9 @@ const local = [
               const idx = searchRegion.indexOf('역');
               region = searchRegion.slice(0, idx);
               console.log(region);
+            }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬들
+              const idx = searchRegion.indexOf('도');
+              region = searchRegion.slice(0, idx);
             }else{
               region = searchRegion;
             }

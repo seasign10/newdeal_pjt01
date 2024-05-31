@@ -176,7 +176,7 @@ async function asyncNaverAPI(){
         addrRegion = item.area2.name;
         updateInfo(addrCity, addrRegion);
 
-        getData();
+        getData(latlng);
         getWeatherData(addrCity, addrRegion);
         }
       );
@@ -258,7 +258,7 @@ function timeNow(){
 }
 
 // json
-const getData = async ()=>{
+const getData = async (LatLng)=>{
   // 시도별 실시간 측정정보 조회
   let localCode = ''
   for(i=0;i<local.length;i++){
@@ -269,31 +269,41 @@ const getData = async ()=>{
   if(newOriginRegion){
     addrRegion = newOriginRegion;
   }
-  const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
-  const response = await fetch(url);
-  const data = await response.json();
-  let localDust = data.response.body.items;
 
-  statusNowUI(localDust);
-  timeNow();
-  wait();
-  document.querySelector('.tap').classList.add('active')
-  const queryBtn = document.querySelector('.fa-circle-question');
-  queryBtn.innerHTML += `
-    <dl class="query_box">
-      <dt>통합대기지수 (단위: %)</dt>
-      <dd>현재 대기오염 정도를<br />
-      퍼센트(%)로 나타냅니다</dd>
-      <dd>자료제공 : 에어코리아</dd>
-    </dl>
-    `
-  queryIcon();
-  const menu = document.querySelector('.menu_list');
-  const menuBtn = document.querySelector('.menu_bar');
-  const menuInBtn = document.querySelector('.menu_icon i');
-  reAppear()
-  menuList(menu, menuBtn, menuInBtn);
-  selectCity(local)
+  try{ // 데이터 응답에따른 url요청 변화
+    const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
+    const response = await fetch(url);
+    if(!response.ok){
+      throw new Error('서버에서 데이터를 가져오는데 실패했습니다.');
+    }
+
+    // response.ok 라면, 그대로 실행
+    const data = await response.json();
+    let localDust = data.response.body.items;
+  
+    statusNowUI(localDust);
+    timeNow();
+    wait();
+    document.querySelector('.tap').classList.add('active')
+    const queryBtn = document.querySelector('.fa-circle-question');
+    queryBtn.innerHTML += `
+      <dl class="query_box">
+        <dt>통합대기지수 (단위: %)</dt>
+        <dd>현재 대기오염 정도를<br />
+        퍼센트(%)로 나타냅니다</dd>
+        <dd>자료제공 : 에어코리아</dd>
+      </dl>
+      `
+    queryIcon();
+    const menu = document.querySelector('.menu_list');
+    const menuBtn = document.querySelector('.menu_bar');
+    const menuInBtn = document.querySelector('.menu_icon i');
+    reAppear()
+    menuList(menu, menuBtn, menuInBtn);
+    selectCity(local)
+  }catch(error){
+    console.log('에러 발생', error);
+  }
 }
 // getData();
 
@@ -634,8 +644,11 @@ const searchBtn = ()=>{
       let region = '';
         if(delTxtIdx !== -1){
           region = searchRegion.slice(0, delTxtIdx);
-        }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역들만 
+        }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역들
           const idx = searchRegion.indexOf('역');
+          region = searchRegion.slice(0, idx);
+        }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬들
+          const idx = searchRegion.indexOf('도');
           region = searchRegion.slice(0, idx);
         }else{
           region = searchRegion;
@@ -666,6 +679,7 @@ let  callAjax = function(city, queryLocation){
 		success: function(data){
 
       console.log(queryLocation, ' : ',data.response.status);
+      console.log(data);
       if(data.response.status=='NOT_FOUND'){
         alert('찾을 수 없습니다.');
       }

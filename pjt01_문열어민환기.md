@@ -6,6 +6,7 @@
      - Naver mpas 3v
 2. **환경** : `HTML5` &`CSS3` &  `VanilaJs` 
 2. 미세먼지 측정지역이 아닌 곳은 경도 위도가 가장 가까운 곳에서 유사 데이터를 뽑아오는 것으로 추측, 우선 일치하는 지역만 가져올 수 있도록 한 후, 마지막에 개선
+2. **후기** : 도로명, 지번 전부 지원되는 [카카오 API](https://developers.kakao.com/docs/latest/ko/local/dev-guide) 를 사용하는 게 더 적절했을 것 같음
 
 
 
@@ -473,5 +474,113 @@ const local = [
       			 },
       ```
 
-      
+- 지도를 지역 상관없이 검색하는 것은 해결,
+
+  - 하지만 다듬어진 데이터 값을 사용 한 결과, 미세먼지가 도로명인 경우에는 변하지 않는것을 확인
+  - 다듬어진 값과, 기존의 값(`originRegion`)을 데이터를 같이 쓸 필요가 있다고 생각
+
+  ```js
+  const delTxtIdx = searchRegion.indexOf('('); // 숫자
+        let region = '';
+          if (delTxtIdx !== -1) {
+            region = searchRegion.slice(0, delTxtIdx);
+          } else {
+            region = searchRegion;
+          }
+          document.querySelector('.menu_list').classList.remove('active');
+          searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
+  ```
+
+  - 도로명을 다듬어주는 경우, 값을 세가지 전부 보내기로 했다.
+
+  ```js
+  // 기존 region값을 저장할 전역 변수 생성
+  let newOriginRegion = '';
+  function searchAddressToCoordinate(address){
+    const newAddress = address.split(' ');
+    // 쪼갰을 경우 즉, 값이 3개인 경우 if문
+    if(newAddress.length==3){
+      const newCity = newAddress[0];
+      const newRegion = newAddress[1];
+      newOriginRegion = newAddress[2]; // 이대로 값을 가져간다.
+      address = `${newCity} ${newRegion}`;
+    }
+    naver.maps.Service.geocode({
+      query: address
+    }, function (status, response) {
+      if (status === naver.maps.Service.Status.ERROR) {
+        return alert('위치를 불러오는 중 문제가 생겼습니다.');
+      }
+      // 주소를 도로명으로 찾을 때, 건물명까지 입력하지 않으면 응답받지 못한다.
+      if (response.v2.meta.totalCount === 0) {
+        // 찾을 수 없는 주소를 여기서 도로명 api로 처리 하기 : address
+        address = address.split(' ');
+        const city = address[0];
+        const region = address[1];
+        const originRegion = address[2];
+        // 도로명 함수에 삽입
+        callAjax(city, region);
+        return;
+      }
+        ...
+        getData();
+    });
+    ...
+  const getData = async ()=>{
+    let localCode = ''
+    for(i=0;i<local.length;i++){
+      if(local[i].name==addrCity){
+        localCode = local[i].code;
+      }
+    }
+    // newOriginRegion 값이 있을때 미세먼지를 검색할 변수를 치환
+    if(newOriginRegion){
+      addrRegion = newOriginRegion;
+    }
+  ```
+
+  - 역이름을 검색하면 도로명도 지번도 아니기 때문에 검색이 되지않는다. `역` 을 `slice(-1)` 조건으로 추가
+
+    ```js
+    const delTxtIdx = searchRegion.indexOf('('); // 숫자
+          let region = '';
+            if(delTxtIdx !== -1){
+              region = searchRegion.slice(0, delTxtIdx);
+            }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역들만 
+              const idx = searchRegion.indexOf('역');
+              region = searchRegion.slice(0, idx);
+              console.log(region);
+            }else{
+              region = searchRegion;
+            }
+            document.querySelector('.menu_list').classList.remove('active');
+            // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
+            searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
+    ...
+    ```
+
+  
+
+- 날씨 (기상청 단기예보 API)
+
+  `timeNow()` 함수에서 값을 재활용 하고 싶으므로, `return` 을 추가하고 `console.log(timeNow())` 를 출력하였으나, 전역에서는 불러지는데 api데이터를 불러오는 함수에서는 불러지지 않았다.
+
+  - 해결
+
+    ```js
+    function timeNow(){
+      let getNow = new Date();
+      let year = getNow.getFullYear();
+      let month = getNow.getMonth()+1;
+      if(month<10){month = '0'+month};
+      let date = getNow.getDate();
+      document.querySelector('.cuttent_time').innerHTML = `${year}-${month}-${date}`;
+    
+      return  {year, month, date}; // 객체로 반환
+    }
+    ```
+
+    - 객체로 값을 전달하니
+
+      결과 :  `{year:2024 ,month:'05', date:31}` 를 받아올 수 있었다.
 

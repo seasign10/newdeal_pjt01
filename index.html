@@ -44,15 +44,15 @@
   </header>
   
   <div id="container" class="container">
+    <div class="wait active">
+      <h3 class="hidden">미세먼지 페이지 불러오는 중</h3><i class="fa-solid fa-circle-notch"></i><span>오늘의 미세먼지는?</span>
+    </div>
     <div class="tap">
       <h2 class="on animated">미세먼지</h2>
       <h2 class="animated">날씨</h2>
     </div>
     <div class="container_box">
       <section class="dust on">
-        <div class="wait active">
-          <h3 class="hidden">미세먼지 페이지 불러오는 중</h3><i class="fa-solid fa-circle-notch"></i><span>오늘의 미세먼지는?</span>
-        </div>
         <!-- 통합대기 -->
         <div class="total_condition">
           <h1 class="hidden">현재 통합대기 미세먼지</h1>
@@ -67,7 +67,21 @@
         <!-- 지도 -->
         <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
       </section>
-      <section class="weather" style="font-size: 40px;color: aliceblue;">날씨 데이터</section>
+      <section class="weather" style="font-size: 40px;color: aliceblue;">
+        <div class="sky_status"></div>
+        <!-- 하늘상태 -->
+        <div class="sky"></div>
+        <!-- 강수상태 -->
+        <div class="pty"></div>
+        <!-- 습도 -->
+        <div class="reh"></div>
+        <!-- 현재기온 -->
+        <div class="tmp"></div>
+        <!-- 최저기온 -->
+        <div class="tmn"></div>
+        <!-- 최고기온 -->
+        <div class="tmx"></div>
+      </section>
     </div>
   </div>
 

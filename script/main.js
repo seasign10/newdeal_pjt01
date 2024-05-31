@@ -1,3 +1,10 @@
+// base | 새로고침 시, window 가장 위로
+window.onload = function(){
+  setTimeout(function(){
+    scrollTo(0, 0);
+  },100);
+};
+
 // survice_key
 const API_KEY = config.apikey;
 const NAVER_API_CLIENT_ID = config.NAVER_API_CLIENT_ID;
@@ -134,7 +141,10 @@ async function asyncNaverAPI(){
   
     function onSuccessGeolocation(position){
       // 성공 시 처리 로직
-      let location = new naver.maps.LatLng(position.coords.latitude, position.coords.longitude);
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      dfs_xy_conv("toXY", lat, lng);
+      let location = new naver.maps.LatLng(lat, lng);
       map.setCenter(location) // 지도의 중심을 현재 위치로 이동
       infowindow.setContent(`<i class="fa-solid fa-location-dot loaction_icon"></i>`);
       infowindow.open(map, location); // 현재 위치에 인포 윈도우를 엽니다.
@@ -173,8 +183,16 @@ async function asyncNaverAPI(){
     }
 }
 
+let newOriginRegion = '';
 // 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
 function searchAddressToCoordinate(address){
+  const newAddress = address.split(' ');
+  if(newAddress.length==3){
+    const newCity = newAddress[0];
+    const newRegion = newAddress[1];
+    newOriginRegion = newAddress[2];
+    address = `${newCity} ${newRegion}`;
+  }
   naver.maps.Service.geocode({
     query: address
   }, function (status, response) {
@@ -188,9 +206,10 @@ function searchAddressToCoordinate(address){
       address = address.split(' ');
       const city = address[0];
       const region = address[1];
+      const originRegion = address[2];
       // 도로명 함수에 삽입
       callAjax(city, region);
-      return;
+      return; // 여기서 함수를 빠져나가지 않으면 아래 코드가 그대로 진행된다.
       // return alert('도로명 주소는 찾을 수 없습니다.');
     }
       item = response.v2.addresses[0];
@@ -228,8 +247,14 @@ function timeNow(){
   let month = getNow.getMonth()+1;
   if(month<10){month = '0'+month};
   let date = getNow.getDate();
-  
+  if(date<10){date = '0'+date};
+  let hours = getNow.getHours();
+  if(hours<10){hours = '0'+hours};
+  let minutes = getNow.getMinutes();
+  if(minutes<10){minutes = '0'+minutes};
   document.querySelector('.cuttent_time').innerHTML = `${year}-${month}-${date}`;
+
+  return  {year, month, date, hours, minutes}; // 객체로 반환
 }
 
 // json
@@ -239,8 +264,10 @@ const getData = async ()=>{
   for(i=0;i<local.length;i++){
     if(local[i].name==addrCity){
       localCode = local[i].code;
-      // console.log(local[i].code);
     }
+  }
+  if(newOriginRegion){
+    addrRegion = newOriginRegion;
   }
   const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
   const response = await fetch(url);
@@ -299,11 +326,19 @@ function statusNowUI(data){
   document.querySelector('.current_location').innerHTML = `${addrCity} ${addrRegion}`
   // grade = 좋음~나쁨 | value : 측정값
   for(let i=0;i<data.length;i++){
-    if(data[i].stationName == addrRegion){ // 특정 지역을 filter
-      dustTotalGrade = data[i].khaiGrade;
-      dustTotalValue = data[i].khaiValue;
-      // data[i]의 값을 다 가져오고 싶다면?
-      allDust(data, i);
+    if(newOriginRegion){ // 검색해서 본 주소를 검색해야할때 (즉, 검색해야할것과 띄워줄 것이 다를떄)
+      if(data[i].stationName == newOriginRegion){
+        dustTotalGrade = data[i].khaiGrade;
+        dustTotalValue = data[i].khaiValue;
+        allDust(data, i);
+      }
+    }else{
+      if(data[i].stationName == addrRegion){ // 특정 지역을 filter
+        dustTotalGrade = data[i].khaiGrade;
+        dustTotalValue = data[i].khaiValue;
+        // data[i]의 값을 다 가져오고 싶다면?
+        allDust(data, i);
+      }
     }
   }
   dustListUI(dustValue, dustGrade);
@@ -439,6 +474,7 @@ function allDust(data, i){
 // 잠시만 기다려주세요.
 function wait(){
   document.querySelector('.wait').classList.remove('active');
+  document.querySelector('.container_box').classList.add('on');
 };
 
 // 물음표
@@ -596,13 +632,17 @@ const searchBtn = ()=>{
       // 간혹 ()이 들어간 문구들이 있음. 이 자료를 정리해서 보내자.
       const delTxtIdx = searchRegion.indexOf('('); // 숫자
       let region = '';
-        if (delTxtIdx !== -1) {
+        if(delTxtIdx !== -1){
           region = searchRegion.slice(0, delTxtIdx);
-        } else {
+        }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역들만 
+          const idx = searchRegion.indexOf('역');
+          region = searchRegion.slice(0, idx);
+        }else{
           region = searchRegion;
         }
         document.querySelector('.menu_list').classList.remove('active');
-        searchAddressToCoordinate(`${selectedValue} ${region}`);
+        // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
+        searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
         getWeatherData(selectedValue, region)
         
     }
@@ -624,6 +664,12 @@ let  callAjax = function(city, queryLocation){
 		dataType: 'jsonp',
 		async: true,
 		success: function(data){
+
+      console.log(queryLocation, ' : ',data.response.status);
+      if(data.response.status=='NOT_FOUND'){
+        alert('찾을 수 없습니다.');
+      }
+
 				const item =  data.response.result.items;
         let region = '';
         // city에 속하는 지역명 뽑기
@@ -642,12 +688,14 @@ let  callAjax = function(city, queryLocation){
           // 사용할 값은 string이 더 적절한 것 같으므로
           const findRegion = regionAddr[regionAddr.length-1];
           searchAddressToCoordinate(`${city} ${findRegion}`);
+          getWeatherData(city, findRegion)
           
         }else{// 괄호가 있을시, 괄호의 주소를 가져옴
           const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
           const lastIdx =  region.indexOf(')');
           findRegion = region.slice(firstIdx+1, lastIdx);
           searchAddressToCoordinate(`${city} ${findRegion}`);
+          getWeatherData(city, findRegion)
         }
 			 },
 		error: function(xhr, stat, err){}
@@ -672,6 +720,7 @@ const tapClick = function(){
 };
 tapClick()
 
+// 기상청 단기예보 data xlsx > json
 let cityCodeList = [];
 const getDataJson = ()=>{
   fetch('./script/data.json')
@@ -684,17 +733,68 @@ const getDataJson = ()=>{
 };
 getDataJson()
 
-const getWeatherData = async(addrCity, addrRegion)=>{
-  let cityId = '';
-  for(let i=0;i<cityCodeList.length;i++){
-    if(cityCodeList[i].Name==addrCity){
-      cityId = cityCodeList[i].Code;
-    }else if(cityCodeList[i].Name.indexOf(addrRegion)!=-1){
-      cityId = cityCodeList[i].Code;
-      console.log(cityCodeList[i].Name);
-    }
-  }
-  const url = new URL(`https://apis.data.go.kr/1360000/MidFcstInfoService/getMidLandFcst?serviceKey=${API_KEY}&pageNo=1&numOfRows=10&dataType=json&regId=${cityId}&tmFc=202405300600`);
+let NewLatLng = '';
+function xyUpdate(LatLng){
+    NewLatLng = LatLng;
+}
+
+// 값을 넣을 곳
+const skyStatus = document.querySelector('.sky_status');
+const sky = document.querySelector('.sky');
+const pty = document.querySelector('.pty');
+const reh = document.querySelector('.reh');
+const tmp = document.querySelector('.tmp');
+const tmn = document.querySelector('.tmn');
+const tmx = document.querySelector('.tmx');
+
+// 필요한 데이터 가공을 위한 객체
+const weatherObj = [
+  {
+    type: 'SKY',
+    unit: null,
+    name: '하늘 상태',
+  },
+  {
+    type: 'PTY',
+    unit: null,
+    name: '강수 상태',
+  },
+  {
+    type: 'REH',
+    unit: '%',
+    name: '습도',
+  },
+  {
+    type: 'TMP',
+    unit: '℃',
+    name: '현재 기온',
+  },
+  {
+    type: 'TMN',
+    unit: '℃',
+    name: '최저 기온',
+  },
+  {
+    type: 'TMX',
+    unit: '℃',
+    name: '기온',
+  },
+]
+// 하늘상태(SKY) 코드 : 맑음(1), 구름많음(3), 흐림(4)
+const weatherSkyStaus = ['맑음', '', '구름많음', '흐림'];
+// 강수형태(PTY) 코드 :  (단기) 없음(0), 비(1), 비/눈(2), 눈(3), 소나기(4) 
+const weatherPtyStaus = ['', '비', '비/눈', '눈', '소나기'];
+
+const getWeatherData = async (addrCity, addrRegion)=>{
+  let time = timeNow(); // 객체로 한번에 받지 않으면 date값만 들어온다.
+  // fcstTime : 현재 시간으로 필터 > 14개값
+  const rows = 1000; // 최대 1000개 이내의 개수, 새벽 6시부터 새벽12시 > 12시간 동안의 시간을 보여줌
+  const nx = NewLatLng.x;
+  const ny = NewLatLng.y;
+  // 한자리 값은 문자열로 되어있으므로, 합쳐도 string으로 합쳐진다.
+  // 하지만 전부 두자리 숫자로 들어올 가능성도 있으니 중간에 문자열을 추가해준다.
+  const nowDate = time.year +''+ time.month + time.date; // 현재날짜
+  const url = new URL(`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${API_KEY}&pageNo=1&numOfRows=${rows}&dataType=json&base_date=${nowDate}&base_time=0500&nx=${nx}&ny=${ny}`);
   await fetch(url)
   .then(response=>{
     if(!response.ok){
@@ -703,9 +803,128 @@ const getWeatherData = async(addrCity, addrRegion)=>{
     return response.json();
   })
   .then(data=>{
-    console.log(data.response.body.items.item);
+    // 데이터 가공
+    const items = data.response.body.items.item;
+    // 현재시간대를 포함한 날씨들을 불러올 것
+    const nowTime = time.hours-1 +''+ time.minutes; 
+    const afterOneHour = time.hours+1 +'';
+    let cnt = 0; // 현재시간의 값 총 14개를 뽑아 줄 것
+    for(let i=0;i<items.length;i++){
+
+      // 총 6가지 데이터만 쓸 것 : category
+      // PTY(강수형태), REH(습도), SKY(하늘상태), TMP(1시간 기온), TMN(최저기온), TMX(최고기온)
+      const category = items[i].category;
+      const weatherType = category=='PTY' || category=='REH' || category=='SKY' || category=='TMP' || category=='TMN' || category=='TMX';
+
+      // 현재를 포함한 이후의 시간 값을 구하려고 했으나, 모든 시간대에 카테고리가 전부 존재하는 것이 아님.
+      // 예상일자와 현재일자도 다를 수 있다.
+      if((items[i].fcstDate==nowDate && items[i].fcstTime>nowTime && items[i].fcstTime<afterOneHour && cnt<6) && weatherType){
+        if(category=='SKY'){
+          
+        }else if(category=='PTY'){
+
+        }else if(category=='REH'){
+          // console.log(items[i]);
+
+          // 오류검토
+          // const value = items[i].fcstValue;
+          // for(let k=0;k<weatherObj.length;k++){
+          //   if(category==weatherObj[k].type){
+          //     value += weatherObj[k].unit;
+          //   }
+          // }
+          // console.log(value);
+        }else if(category=='TMP'){
+          // items[i].fcstValue
+          
+        }else if(category=='TMN'){
+          // items[i].fcstValue
+          
+        }else if(category==='TMX'){
+          // items[i].fcstValue
+
+        }
+        // console.log(items[i].category);
+        // console.log(items[i].fcstValue);
+
+        cnt ++;
+      }
+    }
   })
   .catch(error=>{
     console.error('There has been a problem with your fetch operation:', error)
   });
+}
+
+
+// 기상청 홈페이지에서 발췌한 변환 함수
+// LCC DFS 좌표변환 ( code : 
+//    "toXY"(위경도->좌표, v1:위도, v2:경도)
+function dfs_xy_conv(code, v1, v2) {
+  // LCC DFS 좌표변환을 위한 기초 자료
+  let RE = 6371.00877; // 지구 반경(km)
+  let GRID = 5.0; // 격자 간격(km)
+  let SLAT1 = 30.0; // 투영 위도1(degree)
+  let SLAT2 = 60.0; // 투영 위도2(degree)
+  let OLON = 126.0; // 기준점 경도(degree)
+  let OLAT = 38.0; // 기준점 위도(degree)
+  let XO = 43; // 기준점 X좌표(GRID)
+  let YO = 136; // 기1준점 Y좌표(GRID)
+
+  let DEGRAD = Math.PI / 180.0;
+  let RADDEG = 180.0 / Math.PI;
+  
+  let re = RE / GRID;
+  let slat1 = SLAT1 * DEGRAD;
+  let slat2 = SLAT2 * DEGRAD;
+  let olon = OLON * DEGRAD;
+  let olat = OLAT * DEGRAD;
+  
+  let sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+  sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
+  let sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+  sf = Math.pow(sf, sn) * Math.cos(slat1) / sn;
+  let ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
+  ro = re * sf / Math.pow(ro, sn);
+  let rs = {};
+  if (code == "toXY") {
+    rs['lat'] = v1;
+    rs['lng'] = v2;
+    let ra = Math.tan(Math.PI * 0.25 + (v1) * DEGRAD * 0.5);
+    ra = re * sf / Math.pow(ra, sn);
+    
+    let theta = v2 * DEGRAD - olon;
+    if (theta > Math.PI) theta -= 2.0 * Math.PI;
+    if (theta < -Math.PI) theta += 2.0 * Math.PI;
+    theta *= sn;
+    rs['x'] = Math.floor(ra * Math.sin(theta) + XO + 0.5);
+    rs['y'] = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
+  }
+  else {
+    rs['x'] = v1;
+    rs['y'] = v2;
+    let xn = v1 - XO;
+    let yn = ro - v2 + YO;
+    ra = Math.sqrt(xn * xn + yn * yn);
+    if (sn < 0.0) - ra;
+    let alat = Math.pow((re * sf / ra), (1.0 / sn));
+    alat = 2.0 * Math.atan(alat) - Math.PI * 0.5;
+    
+    if (Math.abs(xn) <= 0.0) {
+      theta = 0.0;
+    }
+    else {
+      if (Math.abs(yn) <= 0.0) {
+        theta = Math.PI * 0.5;
+        if (xn < 0.0) - theta;
+      }
+      else theta = Math.atan2(xn, yn);
+    }
+    let alon = theta / sn + olon;
+    rs['lat'] = alat * RADDEG;
+    rs['lng'] = alon * RADDEG;
+  }
+  xyUpdate(rs);
+  // getWeatherData 로 값 넘겨주기
+  return rs;
 }

@@ -177,12 +177,13 @@ async function asyncNaverAPI(){
         updateInfo(addrCity, addrRegion);
 
         getData(latlng);
-        getWeatherData(addrCity, addrRegion);
+        // getWeatherData(addrCity, addrRegion); // 임시 중단
         }
       );
     }
 }
 
+let cityRegions = [];
 let newOriginRegion = '';
 // 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
 function searchAddressToCoordinate(address){
@@ -206,16 +207,63 @@ function searchAddressToCoordinate(address){
       address = address.split(' ');
       const city = address[0];
       const region = address[1];
-      const originRegion = address[2];
+      // const originRegion = address[2];
       // 도로명 함수에 삽입
       callAjax(city, region);
       return; // 여기서 함수를 빠져나가지 않으면 아래 코드가 그대로 진행된다.
       // return alert('도로명 주소는 찾을 수 없습니다.');
     }
-      item = response.v2.addresses[0];
-      // 좌표
-      // point = new naver.maps.Point(item.x, item.y);
-      let pointMove = new naver.maps.LatLng(item.y, item.x)
+    item = response.v2.addresses[0];
+    // 좌표
+    // point = new naver.maps.Point(item.x, item.y);
+    let pointMove = new naver.maps.LatLng(item.y, item.x)
+    if(!existCnt){
+      let XY = '';
+      let subAddress = '';
+      let lanY = 0;
+      let lngX = 0;
+      let absY = 0;
+      let absX = 0;
+      let baseAbsY = 0;
+      let baseAbsX = 0;
+      let absCnt = 0;
+      //여기서 비교하고 싶음//
+      for(let i=0;i<cityRegions.length;i++){
+        subAddress = `${addrCity} ${cityRegions[i]}`;
+        naver.maps.Service.geocode({
+          query: subAddress
+        }, function (status, response){
+          if(status === naver.maps.Service.Status.ERROR){
+            return alert('위치를 불러오는 중 문제가 생겼습니다.');
+          }
+          if(response.v2.meta.totalCount === 0){console.warn(subAddress)}
+          else{
+            XY = response.v2.addresses[0];
+            // console.log(cityRegions[i], XY);
+            // console.log(cityRegions[i] , ' : ', response.v2.addresses[0].x); // XY.y / XY.x
+            // console.log(cityRegions[i] , ' : ', response.v2.addresses[0].y); // XY.y / XY.x
+            absY = Math.floor(Math.abs(item.y - XY.y)*10000);
+            absX = Math.floor(Math.abs(item.x - XY.x)*10000);
+            if(absCnt==0){
+              console.log(baseAbsX);
+              baseAbsY = absY;
+              baseAbsX = absX;
+              absCnt++;
+            }else if(baseAbsY>absY && baseAbsX>absX){ // 기존 차잇값 보다 더 작은 값이 나오면,
+              console.log('');
+              baseAbsY = absY;
+              baseAbsX = absX;
+
+              lanY = XY.y;
+              lngX = XY.x;
+              console.log('변경y', baseAbsY);
+              console.log('변경x', baseAbsX);
+            }
+          }
+        })
+        }
+        return;
+      }
 
       // 맵 이동
       address = address.split(' ');
@@ -276,10 +324,15 @@ const getData = async (LatLng)=>{
     if(!response.ok){
       throw new Error('서버에서 데이터를 가져오는데 실패했습니다.');
     }
-
     // response.ok 라면, 그대로 실행
     const data = await response.json();
+
     let localDust = data.response.body.items;
+
+    // city의 regions을 담기
+    for(let k=0;k<localDust.length;k++){
+      cityRegions.push(localDust[k].stationName);
+    }
   
     statusNowUI(localDust);
     timeNow();
@@ -329,6 +382,7 @@ let value = '';
 
 // UI content
 let dustContent = ``
+let existCnt = 0;
 
 // let statusNow = ()=>{};
 // function statusNow(){};
@@ -338,12 +392,14 @@ function statusNowUI(data){
   for(let i=0;i<data.length;i++){
     if(newOriginRegion){ // 검색해서 본 주소를 검색해야할때 (즉, 검색해야할것과 띄워줄 것이 다를떄)
       if(data[i].stationName == newOriginRegion){
+        existCnt++;
         dustTotalGrade = data[i].khaiGrade;
         dustTotalValue = data[i].khaiValue;
         allDust(data, i);
       }
     }else{
       if(data[i].stationName == addrRegion){ // 특정 지역을 filter
+        existCnt++;
         dustTotalGrade = data[i].khaiGrade;
         dustTotalValue = data[i].khaiValue;
         // data[i]의 값을 다 가져오고 싶다면?
@@ -351,6 +407,13 @@ function statusNowUI(data){
       }
     }
   }
+  // 반복문이 다 끝났음에도 existCnt==0 (한번도 if문을 거치지 않았다면, 즉 region이 존재하지 않았다면)
+  if(existCnt==0){//////////////////////////////////////////////////////////////////
+    // addrCity & addrRegion 위경도 찾은 후, getData에서 유사 경도위도 값 찾기 > 기본적으로 도로명이아닌 지명으로 검색이 되므로 네이버 api 서치를 이용해도 될 것
+    searchAddressToCoordinate(`${addrCity} ${addrRegion}`)
+    existCnt = 0; // 다시 0
+  }
+
   dustListUI(dustValue, dustGrade);
 
 
@@ -650,13 +713,19 @@ const searchBtn = ()=>{
         }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬들
           const idx = searchRegion.indexOf('도');
           region = searchRegion.slice(0, idx);
-        }else{
+        }else if(searchRegion.slice(-1)=='탑'){ // 마지막 글자가 '도' 인 섬들
+          const idx = searchRegion.indexOf('탑');
+          region = searchRegion.slice(0, idx);
+        }else if(searchRegion.split(' ').length==2){ // 마지막 글자가 '도' 인 섬들
+          region = searchRegion.split(' ')[1];
+        }
+        else{
           region = searchRegion;
         }
         document.querySelector('.menu_list').classList.remove('active');
         // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
         searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
-        getWeatherData(selectedValue, region)
+        // getWeatherData(selectedValue, region)
         
     }
     }
@@ -665,7 +734,7 @@ const searchBtn = ()=>{
 searchBtn();
 
 // 도로명을 검색할 수 있는 api
-let  callAjax = function(city, queryLocation){
+let  callAjax = function(city, queryLocation, originRegion){
   // 주소 값에 지역 까지 들어가면 검색이 되지 않음.
   const sizeCnt = 20;
 	let  data = `service=search&request=search&version=2.0&size=${sizeCnt}&page=1&query=${queryLocation}&type=road&format=json&errorformat=json&key=${VWORLD_API_KEY}`
@@ -679,7 +748,7 @@ let  callAjax = function(city, queryLocation){
 		success: function(data){
 
       console.log(queryLocation, ' : ',data.response.status);
-      console.log(data);
+      console.log(data.response.result.items[0]);
       if(data.response.status=='NOT_FOUND'){
         alert('찾을 수 없습니다.');
       }
@@ -702,14 +771,14 @@ let  callAjax = function(city, queryLocation){
           // 사용할 값은 string이 더 적절한 것 같으므로
           const findRegion = regionAddr[regionAddr.length-1];
           searchAddressToCoordinate(`${city} ${findRegion}`);
-          getWeatherData(city, findRegion)
+          // getWeatherData(city, findRegion)
           
         }else{// 괄호가 있을시, 괄호의 주소를 가져옴
           const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
           const lastIdx =  region.indexOf(')');
           findRegion = region.slice(firstIdx+1, lastIdx);
           searchAddressToCoordinate(`${city} ${findRegion}`);
-          getWeatherData(city, findRegion)
+          // getWeatherData(city, findRegion)
         }
 			 },
 		error: function(xhr, stat, err){}

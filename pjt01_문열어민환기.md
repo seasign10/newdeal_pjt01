@@ -564,7 +564,139 @@ const local = [
     ...
     ```
 
+  - region 값이 `인천 신항` `인천 남항`... 으로 되어있으면 값을 잘라도 아예 찾을 수가 없었으므로 예외처리
+
+  ```js
+  if(!region){//없을시, 첫 로드될때 값이 없는 함수로 실행
+    if(queryLocation=='남항'){
+      searchAddressToCoordinate(`${city} 중구 남항`);
+    }else if(queryLocation=='신항'){
+      searchAddressToCoordinate(`${city} 송도동 신항`);
+    }
+  }
+  ```
+
+
+
+- 로드 시, 값을 불러올 수 없는 경우가 많아 가까운 측정소 값 가져오기
+
+  ```js
+  function searchAddressToCoordinate(address){
+  		...    
+  		item = response.v2.addresses[0];
+      // 좌표
+      // point = new naver.maps.Point(item.x, item.y);
+      let pointMove = new naver.maps.LatLng(item.y, item.x)
   
+      // staitionName에 존재하지 않는 지역이라면,
+      if(!existCnt){
+        let subAddress = '';
+        let YX = '';
+        let absY = 0;
+        let absX = 0;
+        let cntLength = 0;
+        // 가장 가까운 위치를 찾기
+        let closestLocation = null; // 최종 할담 값
+        let smallestDistance = Infinity; // 처음에는 최소 거리를 무한대로 설정
+        //여기서 비교하고 싶음//
+        for(let i=0;i<cityRegions.length;i++){
+          subAddress = `${addrCity} ${cityRegions[i]}`;
+          naver.maps.Service.geocode({
+            query: subAddress
+          }, function (status, response){
+            if(status === naver.maps.Service.Status.ERROR){
+              return alert('위치를 불러오는 중 문제가 생겼습니다.');
+            }
+            if(response.v2.meta.totalCount === 0){
+              // console.warn(subAddress)
+            }
+            else{
+              YX = response.v2.addresses[0];
+              absY = Math.abs(item.y - YX.y);
+              absX = Math.abs(item.x - YX.x);
+              
+              cntLength++;
+  
+              // 유클리드 거리 계산
+              const distance = Math.sqrt(absY * absY + absX * absX);
+              if(distance < smallestDistance) {
+                smallestDistance = distance;
+                closestLocation = cityRegions[i];
+              }
+              if(cityRegions.length-1==cntLength){
+                // 반복문 마지막에 최종값
+                addrRegion = closestLocation;
+                
+                // 검색지역이 아닌, 기존 지역 이름 저장
+                originRegions(address);
+  
+                // 리 랜더링
+                statusNowUI(localDust);
+              };
+              }
+            })
+            }
+        }
+  ...
+    });
+  }
+  
+  let exsitNum = 0; // 해당 아래 함수가 실행됐는지 안됐는지 확인
+  let originAddrRegion = '';
+  function originRegions(address){
+    originAddrRegion = address[1];
+    exsitNum++;
+  }
+  ```
+
+  ```js
+  function statusNowUI(data){
+    document.querySelector('.current_location').innerHTML = `${addrCity} ${addrRegion}`
+    // grade = 좋음~나쁨 | value : 측정값
+    for(let i=0;i<data.length;i++){
+      if(newOriginRegion){ // 검색해서 본 주소를 검색해야할때 (즉, 검색해야할것과 띄워줄 것이 다를때)
+        if(data[i].stationName == newOriginRegion){
+          existCnt++;
+          dustTotalGrade = data[i].khaiGrade;
+          dustTotalValue = data[i].khaiValue;
+          allDust(data, i);
+        }
+      }else{
+        if(data[i].stationName == addrRegion){ // 특정 지역을 filter
+          existCnt++;
+          dustTotalGrade = data[i].khaiGrade;
+          dustTotalValue = data[i].khaiValue;
+          // data[i]의 값을 다 가져오고 싶다면?
+          allDust(data, i);
+          if(exsitNum){// 위의 originRegions함수가 발동되었을 시 실행(리 랜더링)
+            document.querySelector('.current_location').innerHTML = `${addrCity} ${originAddrRegion}`
+          }
+        }
+      }
+    }
+  
+    // 값이 존재하지 않는다면
+    notExist()
+  
+    dustListUI(dustValue, dustGrade);
+    ...
+    function notExist(){
+    // 반복문이 다 끝났음에도 existCnt==0 (한번도 if문을 거치지 않았다면, 즉 region이 존재하지 않았다면)
+    if(existCnt==0){
+      // addrCity & addrRegion 위경도 찾은 후, getData에서 유사 경도위도 값 찾기 > 기본적으로 도로명이아닌 지명으로 검색이 되므로 네이버 api 서치를 이용해도 될 것
+      searchAddressToCoordinate(`${addrCity} ${addrRegion}`)
+      existCnt = 0; // 다시 0
+    }else{
+      // 전부 필터를 거쳐서 가공했음에도 돌아온 데이터(지명)
+      // if()
+      
+    }
+  };
+  ```
+
+  
+
+---
 
 - 날씨 (기상청 단기예보 API)
 

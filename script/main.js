@@ -183,8 +183,8 @@ async function asyncNaverAPI(){
     }
 }
 
-let cityRegions = [];
-let newOriginRegion = '';
+
+let newOriginRegion = ''; // 미세먼지 값의 원래 이름
 // 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
 function searchAddressToCoordinate(address){
   const newAddress = address.split(' ');
@@ -217,16 +217,17 @@ function searchAddressToCoordinate(address){
     // 좌표
     // point = new naver.maps.Point(item.x, item.y);
     let pointMove = new naver.maps.LatLng(item.y, item.x)
+
+    // staitionName에 존재하지 않는 지역이라면,
     if(!existCnt){
-      let XY = '';
       let subAddress = '';
-      let lanY = 0;
-      let lngX = 0;
+      let YX = '';
       let absY = 0;
       let absX = 0;
-      let baseAbsY = 0;
-      let baseAbsX = 0;
-      let absCnt = 0;
+      let cntLength = 0;
+      // 가장 가까운 위치를 찾기
+      let closestLocation = null; // 최종 할담 값
+      let smallestDistance = Infinity; // 처음에는 최소 거리를 무한대로 설정
       //여기서 비교하고 싶음//
       for(let i=0;i<cityRegions.length;i++){
         subAddress = `${addrCity} ${cityRegions[i]}`;
@@ -236,33 +237,34 @@ function searchAddressToCoordinate(address){
           if(status === naver.maps.Service.Status.ERROR){
             return alert('위치를 불러오는 중 문제가 생겼습니다.');
           }
-          if(response.v2.meta.totalCount === 0){console.warn(subAddress)}
-          else{
-            XY = response.v2.addresses[0];
-            // console.log(cityRegions[i], XY);
-            // console.log(cityRegions[i] , ' : ', response.v2.addresses[0].x); // XY.y / XY.x
-            // console.log(cityRegions[i] , ' : ', response.v2.addresses[0].y); // XY.y / XY.x
-            absY = Math.floor(Math.abs(item.y - XY.y)*10000);
-            absX = Math.floor(Math.abs(item.x - XY.x)*10000);
-            if(absCnt==0){
-              console.log(baseAbsX);
-              baseAbsY = absY;
-              baseAbsX = absX;
-              absCnt++;
-            }else if(baseAbsY>absY && baseAbsX>absX){ // 기존 차잇값 보다 더 작은 값이 나오면,
-              console.log('');
-              baseAbsY = absY;
-              baseAbsX = absX;
-
-              lanY = XY.y;
-              lngX = XY.x;
-              console.log('변경y', baseAbsY);
-              console.log('변경x', baseAbsX);
-            }
+          if(response.v2.meta.totalCount === 0){
+            // console.warn(subAddress)
           }
-        })
-        }
-        return;
+          else{
+            YX = response.v2.addresses[0];
+            absY = Math.abs(item.y - YX.y);
+            absX = Math.abs(item.x - YX.x);
+            
+            cntLength++;
+
+            // 유클리드 거리 계산
+            const distance = Math.sqrt(absY * absY + absX * absX);
+            if(distance < smallestDistance) {
+              smallestDistance = distance;
+              closestLocation = cityRegions[i];
+            }
+            if(cityRegions.length-1==cntLength){
+              // 반복문 마지막에 최종값
+              addrRegion = closestLocation;
+              
+              // 검색지역이 아닌, 기존 지역 이름 저장
+              originRegions(address);
+
+              statusNowUI(localDust);
+            };
+            }
+          })
+          }
       }
 
       // 맵 이동
@@ -275,6 +277,13 @@ function searchAddressToCoordinate(address){
       getData();
 
   });
+}
+
+let exsitNum = 0; // 해당 아래 함수가 실행됐는지 안됐는지 확인
+let originAddrRegion = '';
+function originRegions(address){
+  originAddrRegion = address[1];
+  exsitNum++;
 }
 
 // 아이디 인증실패시
@@ -305,6 +314,8 @@ function timeNow(){
   return  {year, month, date, hours, minutes}; // 객체로 반환
 }
 
+let cityRegions = [];
+let localDust = '';
 // json
 const getData = async (LatLng)=>{
   // 시도별 실시간 측정정보 조회
@@ -327,9 +338,10 @@ const getData = async (LatLng)=>{
     // response.ok 라면, 그대로 실행
     const data = await response.json();
 
-    let localDust = data.response.body.items;
+    localDust = data.response.body.items;
 
     // city의 regions을 담기
+    cityRegions = []; // 새로 값들어오면 새로 채워줘야하므로
     for(let k=0;k<localDust.length;k++){
       cityRegions.push(localDust[k].stationName);
     }
@@ -382,7 +394,7 @@ let value = '';
 
 // UI content
 let dustContent = ``
-let existCnt = 0;
+let existCnt = 0; 
 
 // let statusNow = ()=>{};
 // function statusNow(){};
@@ -404,15 +416,15 @@ function statusNowUI(data){
         dustTotalValue = data[i].khaiValue;
         // data[i]의 값을 다 가져오고 싶다면?
         allDust(data, i);
+        if(exsitNum){
+          document.querySelector('.current_location').innerHTML = `${addrCity} ${originAddrRegion}`
+        }
       }
     }
   }
-  // 반복문이 다 끝났음에도 existCnt==0 (한번도 if문을 거치지 않았다면, 즉 region이 존재하지 않았다면)
-  if(existCnt==0){//////////////////////////////////////////////////////////////////
-    // addrCity & addrRegion 위경도 찾은 후, getData에서 유사 경도위도 값 찾기 > 기본적으로 도로명이아닌 지명으로 검색이 되므로 네이버 api 서치를 이용해도 될 것
-    searchAddressToCoordinate(`${addrCity} ${addrRegion}`)
-    existCnt = 0; // 다시 0
-  }
+
+  // 값이 존재하지 않는다면
+  notExist()
 
   dustListUI(dustValue, dustGrade);
 
@@ -469,6 +481,19 @@ function statusNowUI(data){
     document.querySelector('.total_status').innerHTML = dustLv[dustTotalGrade-1];
   }
 }
+
+function notExist(){
+  // 반복문이 다 끝났음에도 existCnt==0 (한번도 if문을 거치지 않았다면, 즉 region이 존재하지 않았다면)
+  if(existCnt==0){
+    // addrCity & addrRegion 위경도 찾은 후, getData에서 유사 경도위도 값 찾기 > 기본적으로 도로명이아닌 지명으로 검색이 되므로 네이버 api 서치를 이용해도 될 것
+    searchAddressToCoordinate(`${addrCity} ${addrRegion}`)
+    existCnt = 0; // 다시 0
+  }else{
+    // 전부 필터를 거쳐서 가공했음에도 돌아온 데이터(지명)
+    // if()
+    
+  }
+};
 
 // 지역 선택하는 select
 function choiceSelect(){
@@ -707,14 +732,11 @@ const searchBtn = ()=>{
       let region = '';
         if(delTxtIdx !== -1){
           region = searchRegion.slice(0, delTxtIdx);
-        }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역들
+        }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역
           const idx = searchRegion.indexOf('역');
           region = searchRegion.slice(0, idx);
-        }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬들
+        }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬
           const idx = searchRegion.indexOf('도');
-          region = searchRegion.slice(0, idx);
-        }else if(searchRegion.slice(-1)=='탑'){ // 마지막 글자가 '도' 인 섬들
-          const idx = searchRegion.indexOf('탑');
           region = searchRegion.slice(0, idx);
         }else if(searchRegion.split(' ').length==2){ // 마지막 글자가 '도' 인 섬들
           region = searchRegion.split(' ')[1];
@@ -748,39 +770,48 @@ let  callAjax = function(city, queryLocation, originRegion){
 		success: function(data){
 
       console.log(queryLocation, ' : ',data.response.status);
-      console.log(data.response.result.items[0]);
       if(data.response.status=='NOT_FOUND'){
         alert('찾을 수 없습니다.');
       }
 
-				const item =  data.response.result.items;
-        let region = '';
-        // city에 속하는 지역명 뽑기
-        for(let i=0;i<sizeCnt;i++){
-          if(item[i].district.indexOf(city)>-1){
-            region = item[i].district;
-            // break; // return을 사용하면 함수밖으로 빠져나가기 때문에
-          }
+      const item =  data.response.result.items;
+      let region = '';
+      // city에 속하는 지역명 뽑기
+      for(let i=0;i<item.length;i++){
+        if(item[i].district.indexOf(city)!=-1){ // district(지역명)에 city(다른city, 겹치는 region방지)가 있는 것을 넣기
+          region = item[i].district;
+          // break; // return을 사용하면 함수밖으로 빠져나가기 때문에
         }
-        if(region.indexOf('(')==-1){
-          // 가장 마지막 단어를 주소로 입력
-          const regionAddr = region.split(' ');
-          // console.log(regionAddr.slice(-1)); // objecy
-          // console.log(regionAddr[regionAddr.length-1]); // string
+      }
+      console.log(region);
+      
+      if(!region){//없을시, 첫 로드될때 값이 없는 함수로 실행
+        if(queryLocation=='남항'){
+          searchAddressToCoordinate(`${city} 중구 남항`);
+        }else if(queryLocation=='신항'){
+          searchAddressToCoordinate(`${city} 송도동 신항`);
+        }
+      }
+      
+      if(region.indexOf('(')==-1){
+        // 가장 마지막 단어를 주소로 입력
+        const regionAddr = region.split(' ');
+        // console.log(regionAddr.slice(-1)); // objecy
+        // console.log(regionAddr[regionAddr.length-1]); // string
 
-          // 사용할 값은 string이 더 적절한 것 같으므로
-          const findRegion = regionAddr[regionAddr.length-1];
-          searchAddressToCoordinate(`${city} ${findRegion}`);
-          // getWeatherData(city, findRegion)
-          
-        }else{// 괄호가 있을시, 괄호의 주소를 가져옴
-          const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
-          const lastIdx =  region.indexOf(')');
-          findRegion = region.slice(firstIdx+1, lastIdx);
-          searchAddressToCoordinate(`${city} ${findRegion}`);
-          // getWeatherData(city, findRegion)
-        }
-			 },
+        // 사용할 값은 string이 더 적절한 것 같으므로
+        const findRegion = regionAddr[regionAddr.length-1];
+        searchAddressToCoordinate(`${city} ${findRegion} ${queryLocation}`);
+        // getWeatherData(city, findRegion)
+        
+      }else{// 괄호가 있을시, 괄호의 주소를 가져옴
+        const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
+        const lastIdx =  region.indexOf(')');
+        findRegion = region.slice(firstIdx+1, lastIdx);
+        searchAddressToCoordinate(`${city} ${findRegion} ${queryLocation}`);
+        // getWeatherData(city, findRegion)
+      }
+			},
 		error: function(xhr, stat, err){}
 	});
 }

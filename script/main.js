@@ -143,7 +143,7 @@ async function asyncNaverAPI(){
       // 성공 시 처리 로직
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      dfs_xy_conv("toXY", lat, lng);
+      dfs_xy_conv("toXY", lat, lng); // 현재 위치 로드될 때 xy
       let location = new naver.maps.LatLng(lat, lng);
       map.setCenter(location) // 지도의 중심을 현재 위치로 이동
       infowindow.setContent(`<i class="fa-solid fa-location-dot loaction_icon"></i>`);
@@ -160,7 +160,7 @@ async function asyncNaverAPI(){
     }
   
     // 좌표 > 주소(위치정보)
-    function searchCoordinateToAddress(latlng){
+    function searchCoordinateToAddress(latlng){ // 주소 로드될 때만 위경도 값을 이용해서 주소 찾기
       naver.maps.Service.reverseGeocode({
         coords: latlng,
         orders: [
@@ -176,8 +176,8 @@ async function asyncNaverAPI(){
         addrRegion = item.area2.name;
         updateInfo(addrCity, addrRegion);
 
-        getData(latlng);
-        // getWeatherData(addrCity, addrRegion); // 임시 중단
+        getData();
+        getWeatherData();
         }
       );
     }
@@ -186,7 +186,7 @@ async function asyncNaverAPI(){
 
 let newOriginRegion = ''; // 미세먼지 값의 원래 이름
 // 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
-function searchAddressToCoordinate(address){
+function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도 지역 적용이 되도록//////////////////////
   const newAddress = address.split(' ');
   if(newAddress.length==3){
     const newCity = newAddress[0];
@@ -216,9 +216,16 @@ function searchAddressToCoordinate(address){
     item = response.v2.addresses[0];
     // 좌표
     // point = new naver.maps.Point(item.x, item.y);
+
+
+    // 새로 검색되어 입력되는 주소 | getWeatherData
+    dfs_xy_conv("toXY", item.y, item.x);
+    getWeatherData();
+
+
     let pointMove = new naver.maps.LatLng(item.y, item.x)
 
-    // staitionName에 존재하지 않는 지역이라면,
+    ///////////// staitionName에 존재하지 않는 지역이라면, //////////////////
     if(!existCnt){
       let subAddress = '';
       let YX = '';
@@ -305,13 +312,15 @@ function timeNow(){
   if(month<10){month = '0'+month};
   let date = getNow.getDate();
   if(date<10){date = '0'+date};
+
   let hours = getNow.getHours();
   if(hours<10){hours = '0'+hours};
   let minutes = getNow.getMinutes();
   if(minutes<10){minutes = '0'+minutes};
-  document.querySelector('.cuttent_time').innerHTML = `${year}-${month}-${date}`;
-
-  return  {year, month, date, hours, minutes}; // 객체로 반환
+  let sec = getNow.getSeconds();
+  if(sec<10){sec = '0'+sec};
+  
+  return  {year, month, date, hours, minutes, sec}; // 객체로 반환
 }
 
 let cityRegions = [];
@@ -348,6 +357,8 @@ const getData = async (LatLng)=>{
   
     statusNowUI(localDust);
     timeNow();
+    const date = timeNow();
+    document.querySelector('.cuttent_time').innerHTML = `${date.year}-${date.month}-${date.date}`;
     wait();
     document.querySelector('.tap').classList.add('active')
     const queryBtn = document.querySelector('.fa-circle-question');
@@ -374,7 +385,7 @@ const getData = async (LatLng)=>{
 
 // 우선순위 및 사용하기 좋게 배열에 값을 담아준다.
 const dustLv = ['좋음', '보통', '나쁨', '매우나쁨'];
-const statusColor = ['#0062ff', 'green', 'orange', 'red'];
+const statusColor = ['#2d7dd2', 'green', 'orange', 'red'];
 const statusEmoji = ['laugh-squint', 'smile-wink', 'surprise', 'tired'];
 const dustType = ['pm10', 'pm25', 'no2', 'o3', 'co', 'so2'];
 const dustName = ['미세먼지', '초미세먼지', '이산화질소', '오존', '일산화탄소', '아황산가스'];
@@ -455,7 +466,7 @@ function statusNowUI(data){
     `;
     const msgColor = document.querySelector('.ventilation');
     if(dustTotalGrade==1){
-      msgColor.style.color = '#0062ff';
+      msgColor.style.color = '#2d7dd2';
     }else if(dustTotalGrade==2){
       msgColor.style.color = 'green';
     }else if(dustTotalGrade==3){
@@ -495,10 +506,6 @@ function notExist(){
   }
 };
 
-// 지역 선택하는 select
-function choiceSelect(){
-
-};
 
 // 대기오염 리스트를 출력하는 함수
 function dustListUI(dustValue, dustGrade){
@@ -747,7 +754,6 @@ const searchBtn = ()=>{
         document.querySelector('.menu_list').classList.remove('active');
         // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
         searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
-        // getWeatherData(selectedValue, region)
         
     }
     }
@@ -771,7 +777,12 @@ let  callAjax = function(city, queryLocation, originRegion){
 
       console.log(queryLocation, ' : ',data.response.status);
       if(data.response.status=='NOT_FOUND'){
-        alert('찾을 수 없습니다.');
+        //석모리
+        if(queryLocation=='석모리'){
+          searchAddressToCoordinate(`${city} 강화군 석모리`);
+        }else{
+          alert('찾을 수 없습니다.');
+        }
       }
 
       const item =  data.response.result.items;
@@ -802,7 +813,6 @@ let  callAjax = function(city, queryLocation, originRegion){
         // 사용할 값은 string이 더 적절한 것 같으므로
         const findRegion = regionAddr[regionAddr.length-1];
         searchAddressToCoordinate(`${city} ${findRegion} ${queryLocation}`);
-        // getWeatherData(city, findRegion)
         
       }else{// 괄호가 있을시, 괄호의 주소를 가져옴
         const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
@@ -817,6 +827,121 @@ let  callAjax = function(city, queryLocation, originRegion){
 }
 
 ////////////////////// 날씨 데이터 ///////////////////////
+let time = timeNow(); // 객체로 한번에 받지 않으면 date값만 들어온다.
+
+function setTime(){
+  let times = timeNow(); 
+  document.querySelector('.time_now').innerHTML = `
+  <h2 class="hidden">현재 시간</h2>
+  ${times.hours} : ${times.minutes} : ${times.sec}
+  `;
+};
+
+
+function statusWeatherUI(items, nowDate, nowTime){
+  const afterOneHour = time.hours+1 +'';
+  let cnt = 0; // 현재시간의 값 총 14개를 뽑아 줄 것  
+  
+  setTime();
+  setInterval(setTime, 1000);
+
+  for(let i=0;i<items.length;i++){
+  
+    // 총 6가지 데이터만 쓸 것 : category
+    // PTY(강수형태), REH(습도), SKY(하늘상태), TMP(1시간 기온), TMN(최저기온), TMX(최고기온)
+    const category = items[i].category;
+    const weatherType = category=='PTY' || category=='REH' || category=='SKY' || category=='TMP';
+    // 현재를 포함한 이후의 시간 값을 구하려고 했으나, 모든 시간대에 카테고리가 전부 존재하는 것이 아님.
+    // 예상일자와 현재일자도 다를 수 있다. | 날짜도 같고, 시간은 현재시간대
+    if((items[i].fcstDate==nowDate && items[i].fcstTime>nowTime && items[i].fcstTime<afterOneHour && cnt<6) && weatherType){
+      if(category=='SKY'){
+        let value = items[i].fcstValue;
+        sky.innerHTML = `
+          <div class="sky_icon">
+            <i class="fa-solid fa-${weatherSkyIcon[value]}"></i>
+            <p>${weatherSkyStaus[value]}</p>
+          </div>
+        `
+      }else if(category=='PTY'){
+        let value = items[i].fcstValue;
+          pty.innerHTML = `
+          <div class="pty_icon">
+            <i class="fa-solid fa-${weatherPtyIcon[value]}"></i>
+            <p>${weatherPtyStaus[value]}</p>
+          </div>
+          `          
+      }else if(category=='REH'){
+        let value = items[i].fcstValue;
+        for(let k=0;k<weatherObj.length;k++){
+          if(category==weatherObj[k].type){
+            value += weatherObj[k].unit;
+          }
+        }
+        reh.innerHTML = `
+        <h4>습도</h4>
+        <p class="icon_value"><i class="fa-solid fa-droplet"></i>
+        <span class="weather_value">${value}</span><p>
+        `
+      }else if(category=='TMP'){
+        let value = items[i].fcstValue;
+        for(let k=0;k<weatherObj.length;k++){
+          if(category==weatherObj[k].type){
+            value += weatherObj[k].unit;
+          }
+        }
+        tmp.innerHTML = `
+        <h4>기온</h4>
+        <p class="icon_value"><i class="fa-solid fa-temperature-low"></i>
+        <span class="weather_value">${value}<span><p>
+        `
+      }
+
+    }else{
+      // 하루에 한 두번만 가져와지는 값 같으므로
+      let tmnCnt = 0;
+      let tmxCnt = 0;
+      if(category=='TMN' || category=='TMX'){
+        if(category=='TMN'&&tmnCnt==0){
+          let value = items[i].fcstValue;
+          for(let k=0;k<weatherObj.length;k++){
+            if(category==weatherObj[k].type){
+              value += weatherObj[k].unit;
+            }
+          }
+          maxMinTemp.innerHTML = `
+          <div class="tmn">
+          <i class="fa-solid fa-temperature-arrow-down"></i>
+          <h4 class="hidden">최저기온</h4>
+          <div class="tmn_value">${value}</div>
+          </div>
+          <p>/</p>
+          `
+          tmnCnt++;
+        }else if(category==='TMX' && tmxCnt==0){
+          let value = items[i].fcstValue;
+          for(let k=0;k<weatherObj.length;k++){
+            if(category==weatherObj[k].type){
+              value += weatherObj[k].unit;
+            }
+          }
+          maxMinTemp.innerHTML += `
+          <div class="tmx">
+          <i class="fa-solid fa-temperature-arrow-up"></i>
+            <h4 class="hidden">최고기온</h4>
+            <div class="tmx_value">${value}</div>
+          </div>
+          `
+          tmxCnt++;
+        }
+        cnt ++;
+      }
+    }
+    document.querySelector('.weather').classList.add('active');
+    document.querySelector('.wait_weather').classList.remove('active');
+  }
+}
+
+
 // 탭 : classList 를 사용 (display none X)
 const tap = document.querySelectorAll('.tap h2');
 const tapDisplay = document.querySelectorAll('.container_box section');
@@ -850,16 +975,15 @@ getDataJson()
 let NewLatLng = '';
 function xyUpdate(LatLng){
     NewLatLng = LatLng;
+    return NewLatLng;
 }
 
 // 값을 넣을 곳
-const skyStatus = document.querySelector('.sky_status');
 const sky = document.querySelector('.sky');
 const pty = document.querySelector('.pty');
 const reh = document.querySelector('.reh');
 const tmp = document.querySelector('.tmp');
-const tmn = document.querySelector('.tmn');
-const tmx = document.querySelector('.tmx');
+const maxMinTemp = document.querySelector('.max_min_temp');
 
 // 필요한 데이터 가공을 위한 객체
 const weatherObj = [
@@ -895,12 +1019,21 @@ const weatherObj = [
   },
 ]
 // 하늘상태(SKY) 코드 : 맑음(1), 구름많음(3), 흐림(4)
-const weatherSkyStaus = ['맑음', '', '구름많음', '흐림'];
+const weatherSkyStaus = ['', '맑음', '', '구름많음', '흐림'];
+const weatherSkyIcon = ['', 'sun', '', 'cloud-sun', 'cloud'];
 // 강수형태(PTY) 코드 :  (단기) 없음(0), 비(1), 비/눈(2), 눈(3), 소나기(4) 
-const weatherPtyStaus = ['', '비', '비/눈', '눈', '소나기'];
+const weatherPtyStaus = ['강수 없음', '비', '비/눈', '눈', '소나기'];
+const weatherPtyIcon = ['water', 'cloud-rain', 'umbrella', 'snow-flake', 'cloud-shower-heavy'];
 
-const getWeatherData = async (addrCity, addrRegion)=>{
-  let time = timeNow(); // 객체로 한번에 받지 않으면 date값만 들어온다.
+const getWeatherData = async ()=>{
+    // 계산된 시간이 범위를 0~23 넘지 않도록 처리
+    let h = time.hours-1;
+    if(h<10){h='0'+h}else if(h<0){h='00'};
+    let ah = time.hours+1;
+    if(ah<10){ah='0'+ah}else if(ah>23){ah='00'}
+  
+    const nowTime = h +''+ time.minutes; 
+
   // fcstTime : 현재 시간으로 필터 > 14개값
   const rows = 1000; // 최대 1000개 이내의 개수, 새벽 6시부터 새벽12시 > 12시간 동안의 시간을 보여줌
   const nx = NewLatLng.x;
@@ -920,56 +1053,12 @@ const getWeatherData = async (addrCity, addrRegion)=>{
     // 데이터 가공
     const items = data.response.body.items.item;
     // 현재시간대를 포함한 날씨들을 불러올 것
-    const nowTime = time.hours-1 +''+ time.minutes; 
-    const afterOneHour = time.hours+1 +'';
-    let cnt = 0; // 현재시간의 값 총 14개를 뽑아 줄 것
-    for(let i=0;i<items.length;i++){
-
-      // 총 6가지 데이터만 쓸 것 : category
-      // PTY(강수형태), REH(습도), SKY(하늘상태), TMP(1시간 기온), TMN(최저기온), TMX(최고기온)
-      const category = items[i].category;
-      const weatherType = category=='PTY' || category=='REH' || category=='SKY' || category=='TMP' || category=='TMN' || category=='TMX';
-
-      // 현재를 포함한 이후의 시간 값을 구하려고 했으나, 모든 시간대에 카테고리가 전부 존재하는 것이 아님.
-      // 예상일자와 현재일자도 다를 수 있다.
-      if((items[i].fcstDate==nowDate && items[i].fcstTime>nowTime && items[i].fcstTime<afterOneHour && cnt<6) && weatherType){
-        if(category=='SKY'){
-          
-        }else if(category=='PTY'){
-
-        }else if(category=='REH'){
-          // console.log(items[i]);
-
-          // 오류검토
-          // const value = items[i].fcstValue;
-          // for(let k=0;k<weatherObj.length;k++){
-          //   if(category==weatherObj[k].type){
-          //     value += weatherObj[k].unit;
-          //   }
-          // }
-          // console.log(value);
-        }else if(category=='TMP'){
-          // items[i].fcstValue
-          
-        }else if(category=='TMN'){
-          // items[i].fcstValue
-          
-        }else if(category==='TMX'){
-          // items[i].fcstValue
-
-        }
-        // console.log(items[i].category);
-        // console.log(items[i].fcstValue);
-
-        cnt ++;
-      }
-    }
+    statusWeatherUI(items, nowDate, nowTime);
   })
   .catch(error=>{
     console.error('There has been a problem with your fetch operation:', error)
   });
 }
-
 
 // 기상청 홈페이지에서 발췌한 변환 함수
 // LCC DFS 좌표변환 ( code : 

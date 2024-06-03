@@ -67,21 +67,38 @@
         <!-- 지도 -->
         <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
       </section>
-      <section class="weather" style="font-size: 40px;color: aliceblue;">
-        <div class="sky_status"></div>
-        <!-- 하늘상태 -->
-        <div class="sky"></div>
-        <!-- 강수상태 -->
-        <div class="pty"></div>
-        <!-- 습도 -->
-        <div class="reh"></div>
-        <!-- 현재기온 -->
-        <div class="tmp"></div>
-        <!-- 최저기온 -->
-        <div class="tmn"></div>
-        <!-- 최고기온 -->
-        <div class="tmx"></div>
-      </section>
+      <section class="weather">
+        <div class="weather_box">
+          <div class="wait_weather wait active">
+            <i class="fa-solid fa-circle-notch"></i>
+            불러오는 중
+          </div>
+          <div class="time_now"></div>
+          
+          <div class="weather_status">
+            <!-- 하늘상태 -->
+            <div class="sky"></div>
+            <!-- 강수상태 -->
+            <div class="pty"></div>
+          </div>
+
+          <div class="reh_tmp">
+            <!-- 습도 -->
+            <div class="reh"></div>
+            <!-- 현재기온 -->
+            <div class="tmp"></div>
+          </div>
+
+          <div class="max_min_temp">
+            <!-- 최저기온 -->
+            <div class="tmn"></div>
+            <!-- 최고기온 -->
+            <div class="tmx"></div>
+          </div>
+  
+  
+        </section>
+      </div>
     </div>
   </div>
 

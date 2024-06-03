@@ -142,7 +142,8 @@ span{text-align: center;display: inline-block;}
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 8rem auto 3rem auto;
+  margin-top: 8rem;
+  margin-bottom: 3rem;
   height: 1210px;
 }
 #container .tap{
@@ -176,9 +177,11 @@ span{text-align: center;display: inline-block;}
   flex-wrap: wrap;
   position: relative;
   width: 100%;
+  height: 100%;
 }
 section.dust{
   display: flex;
+  justify-content: center;
   flex-direction: column;
   align-items: center;
   width: 45%;
@@ -308,16 +311,128 @@ section.dust{
 }
 
 /* 중단 - 날씨 */
-#container .weather{
-  width: 492px;
-  min-width: 45%;
-  /* background-color: blue; */
-  /* height: 700px; */
+section.weather{
+  display: none;
+  position: relative;
+}
+.wait_weather{
+  position: absolute;
+  top: 50%;
+}
+section.weather.active{
+  width: 45%;
+  min-width: 492px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-radius: 20px;
+  color: #fff;
+  background: linear-gradient(#ffffff00 2%, #086375, #5c3063);
+  height: 1110px;
+}
+#container .weather_box{
+  height: 810px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+}
+#container .weather .time_now{
+  text-align: center;
+  font-size: 550%;
+  font-weight: 100;
+
+  color: #fff;
+  
+  /* 글자색 적용 */
+  /* background: linear-gradient(#086375, #fff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent; */
+
+  /* 아웃라인 */
+  /* -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: #87a5ab; */
+}
+#container .weather .time_now>h2{
+  font-size: 0;
+}
+#container .weather_status{
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-top: 3rem;
+}
+#container .weather_status i{
+  font-size: 140px;
+}
+#container .weather_status p{
+  text-align: center;
+  margin: 1rem;
+  font-size: 36px;
+  font-weight: 100;
+}
+
+#container .reh_tmp{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  text-align: center;
+  border-top: 1px dashed #ffffff48;
+  width: 80%;
+  padding-top: 3rem;
+  margin-top: 3rem;
+}
+#container .reh_tmp .reh .icon_value{
+  display: flex;
+  align-items: center;
+}
+#container .reh_tmp .tmp .icon_value{
+  display: flex;
+  align-items: center;
+}
+#container .reh_tmp .tmp{
+  margin-top: 3rem;
+}
+#container .reh_tmp h4{
+  font-size: 24px;
+  font-weight: 700;
+}
+#container .weather .weather_box .weather_value{
+  font-size: 88px;
+  font-weight: 100;
+}
+#container .weather .weather_box p>i.fa-solid{
+  font-size: 32px;
+  margin-right: 0.8rem;
+}
+
+#container .weather .max_min_temp{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* background-color: #ffffff50; */
+}
+#container .weather .max_min_temp i{
+  margin-right: 0.3rem;
+  font-size: 16px;
+}
+#container .tmn, #container .tmx{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem;
+}
+#container .tmx_value, #container .tmn_value{
+  font-size: 36px;
+  font-weight: 100;
 }
 
 
 /* 하단 */
-#footer{background-color: #33743b;height: 32px;}
+#footer{background-color: #33743b;height: 32px;position: relative;bottom: 0;}
 
 
 /* 편의성 및 접근성 style */
@@ -341,12 +456,24 @@ section.dust{
 
 /* 반응형 */
 @media(max-width: 998px){
+  #container{margin-bottom: 0;}
+
   /* 날씨와 미세먼지를 탭으로 보여줄 것 */
-  section.weather.on{
-    position: absolute;
+  #container section.weather.on{
     display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 0;
+    height: 100%;
+    width: 100%;
   }
-  section.weather{
+  #container .weather_box{
+    height: 1000px;
+    width: 100%;
+    max-width: 492px;
+    flex-direction: column;
+  }
+  #container section.weather{
     display: none;
   }
   section.dust.on{

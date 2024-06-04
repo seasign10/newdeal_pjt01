@@ -1293,7 +1293,6 @@ const scrollWeatherList = ()=>{
     // x : 현재 mousedouwn한 채 움직이고 있는 최종 마우스 좌표 - startPoint : 요소 내부에서 처음 클릭한 좌표 값(클릭한 순간 고정값)
     // move : 클릭한 위치에서부터 얼만큼 이동했는지 | 음수값 : 마우스 오른쪽>왼쪽 => 오른쪽을 끌어옴 | 양수값 : 마우스 왼쪽>오른쪽 => 왼쪽을 끌어옴
     const move = (x-startPoint);
-    console.log(move ,' : ', x, '-',startPoint);
     dragWeather.scrollLeft = scrollLefts-move;
   });
 

@@ -342,7 +342,7 @@ let localDust = '';
 const getData = async (LatLng)=>{
   // 시도별 실시간 측정정보 조회
   let localCode = ''
-  for(i=0;i<local.length;i++){
+  for(let i=0;i<local.length;i++){
     if(local[i].name==addrCity){
       localCode = local[i].code;
     }
@@ -685,7 +685,7 @@ function selectCity(local){
   let cityContent = `
   <option class="choice_city" disabled hidden selected>지역을 선택하세요.</option>
   `;
-  for(i=0;i<local.length;i++){
+  for(let i=0;i<local.length;i++){
     cityContent += `<option name="city" value="${local[i].name}">${local[i].name}</option>`
   }
   inputCity.innerHTML = cityContent;
@@ -950,7 +950,9 @@ function setTime(){
 function statusWeatherUI(items, nowDate, nowTime){
   const afterOneHour = time.hours+1 +'';
   let cnt = 0; // 현재시간의 값 총 14개를 뽑아 줄 것  
-  let listCnt=0; // 기본적으로 4일 이후의 값까지 발표되기 때문에 자료가 없을 염려는 하지 않아도 된다.
+  let listCnt = 0; // 기본적으로 4일 이후의 값까지 발표되기 때문에 자료가 없을 염려는 하지 않아도 된다.
+  let tmpCnt = 0; // tmp값도 가져올 것
+  let tmpList = [];
   const weatherList = document.querySelector('.today_weather_list');
   let weatherListContent = '';
 
@@ -1051,7 +1053,8 @@ function statusWeatherUI(items, nowDate, nowTime){
     // 날씨 리스트 만들기
     let status = '';
     let statusIcon = '';
-    if((category=='SKY' || category=='PTY') && ((items[i].fcstDate==nowDate && items[i].fcstTime>nowTime)||(items[i].fcstDate>nowDate))){
+    const timeRules = (items[i].fcstDate==nowDate && items[i].fcstTime>nowTime)||(items[i].fcstDate>nowDate);
+    if((category=='SKY' || category=='PTY') && timeRules){
       if(category=='PTY' && items[i].fcstValue>0 && listCnt<12){ //눈,비 예보일때는 pty 값 가져오기
         status = weatherPtyStaus[items[i].fcstValue];
         statusIcon = weatherPtyIcon[items[i].fcstValue];
@@ -1059,6 +1062,7 @@ function statusWeatherUI(items, nowDate, nowTime){
         <li>
         <p>${items[i].fcstTime.slice(0, 2)}시</p>
         <i class="fa-solid fa-${statusIcon}"></i>
+        <span class="tmp_c"></span>
         <span>${status}</span>
         </li>`;
         listCnt++;
@@ -1069,15 +1073,29 @@ function statusWeatherUI(items, nowDate, nowTime){
         <li>
         <p>${items[i].fcstTime.slice(0, 2)}시</p>
         <i class="fa-solid fa-${statusIcon}"></i>
-        <span>${status}<span>
+        <span class="tmp_c"></span>
+        <span>${status}</span>
         </li>`;
         listCnt++;
         }
+      }
+      if(category=='TMP' && tmpCnt<12 && timeRules){
+        console.log((items[i]));
+        for(let t=0;t<weatherObj.length;t++){
+          if(weatherObj[t].type=='TMP'){
+            tmpList.push(items[i].fcstValue + weatherObj[t].unit);
+          }
+        }
+        tmpCnt++;
+      }
+    }//for(반복문)이 끝나면
+    weatherList.innerHTML = weatherListContent;
+    const tmpStatus = document.querySelectorAll('.tmp_c');
+    for(let t=0;t<tmpList.length;t++){
+      tmpStatus[t].innerHTML = tmpList[t];
     }
-  }//for(반복문)이 끝나면
-  weatherList.innerHTML = weatherListContent;
-  document.querySelector('.weather').classList.add('active');
-  document.querySelector('.wait_weather').classList.remove('active');
+    document.querySelector('.weather').classList.add('active');
+    document.querySelector('.wait_weather').classList.remove('active');
 }
 
 

@@ -515,7 +515,7 @@ section.weather.active{
 
 
 /* 하단 */
-#footer{background-color: #33743b;height: 32px;position: relative;bottom: 0;}
+#footer{background-color: #33743b;height: 32px;position: relative;bottom: -16px;;}
 
 
 /* 편의성 및 접근성 style */

@@ -726,6 +726,116 @@ const local = [
 
 
 
+- 데이터에 없는 지역 검색
+
+  ```js
+  if(regions.indexOf(searchRegion)==-1){
+      // 나중에 위도 경도 유사한 측정소의 값을 가져올 것 (현재는 임시)
+      if(!searchRegion){
+        warnMsg.innerText = '주소가 입력되지 않았습니다.';
+        warnMsg.classList.remove('hidden');
+        warnMsg.style.fontSize = '12px';
+        return;
+      }else if(searchRegion.indexOf(' ')>-1){
+        warnMsg.innerText = '주소에 공백이 있습니다.';
+        warnMsg.classList.remove('hidden');
+        warnMsg.style.fontSize = '12px';
+        return;
+      }else if(searchRegion.slice(-1)=='동'||searchRegion.slice(-1)=='구'||searchRegion.slice(-1)=='읍'||searchRegion.slice(-1)=='리'||searchRegion.slice(-1)=='군'){
+        existCnt=0; // 없는 주소를 검색 > 근처 측정소 값을 가져오기 위한 초기화
+        warnMsg.classList.add('hidden');
+        warnMsg.style.fontSize = '0';
+        document.querySelector('.menu_list').classList.remove('active');
+        searchAddressToCoordinate(`${selectedValue} ${searchRegion}`);
+        isWarn=false; // 새로 검색 성공할 때는 초기화
+        return;
+      }
+      warnMsg.innerText = '지명만 검색 됩니다.';
+      warnMsg.classList.remove('hidden');
+      warnMsg.style.fontSize = '12px';
+      return;
+  
+  ```
+
+  - 예외 처리
+
+  ```js
+  if (response.v2.meta.totalCount === 0) {
+        if(alreadyAjaxCnt){ // 이미 지명도 도로명도 전부 검색이 안된다면, 반복 막기
+          if(!isWarn){
+            console.warn(`${address.split(' ')[1]} is not exist in ${address.split(' ')[0]}`);
+            alert('존재하지 않는 지명입니다.');
+            isWarn=true;
+          }
+          alreadyAjaxCnt=0;
+          return;
+        }
+  ```
+
+  - 반복되지 않도록 검열 확인 함수와 return을 적절히 이용
+
+  ```js
+  // 새로 검색되어 입력되는 주소 | getWeatherData
+      dfs_xy_conv("toXY", item.y, item.x);
+      getWeatherData();
+  
+      let pointMove = new naver.maps.LatLng(item.y, item.x)
+  
+      // staitionName에 존재하지 않는 지역이라면, //
+      if(!existCnt){
+        existCnt++;
+        let subAddress = '';
+        let YX = '';
+        let absY = 0;
+        let absX = 0;
+        let cntLength = 0;
+        // 가장 가까운 위치를 찾기
+        let closestLocation = null; // 최종 할담 값
+        let smallestDistance = Infinity; // 처음에는 최소 거리를 무한대로 설정
+        //여기서 비교하고 싶음//
+        for(let i=0;i<cityRegions.length;i++){
+          subAddress = `${addrCity} ${cityRegions[i]}`;
+          naver.maps.Service.geocode({
+            query: subAddress
+          }, function (status, response){
+            if(status === naver.maps.Service.Status.ERROR){
+              return alert('위치를 불러오는 중 문제가 생겼습니다.');
+            }
+            if(response.v2.meta.totalCount === 0){
+              // console.warn(subAddress)
+            }
+            else{
+              YX = response.v2.addresses[0];
+              absY = Math.abs(item.y - YX.y);
+              absX = Math.abs(item.x - YX.x);
+              
+              cntLength++;
+  
+              // 유클리드 거리 계산
+              const distance = Math.sqrt(absY * absY + absX * absX);
+              if(distance < smallestDistance){
+                smallestDistance = distance;
+                closestLocation = cityRegions[i];
+              }else if(cityRegions.length-1==cntLength){
+                // 반복문 마지막에 최종값
+                addrRegion = closestLocation;
+                
+                // 검색지역이 아닌, 기존 지역 이름 저장
+                originRegions(address);
+  
+                statusNowUI(localDust);
+              };
+              }
+            })
+            }
+        }
+        alreadyAjaxCnt=0; // 검색이 성공적으로 되면 다시 초기화
+  ```
+
+  - 날씨와 지역을 둘다 연동
+
+  
+
 - 날씨 (기상청 단기예보 API)
 
   `timeNow()` 함수에서 값을 재활용 하고 싶으므로, `return` 을 추가하고 `console.log(timeNow())` 를 출력하였으나, 전역에서는 불러지는데 api데이터를 불러오는 함수에서는 불러지지 않았다.
@@ -751,8 +861,13 @@ const local = [
 
 
 
+- 메뉴 마무리
+
 ---
 
 ## :bookmark: 힘들었던 점
 
-1. 한페이지에서   
+1. 한페이지에서  함수를 길게 다뤄야 했던 점
+2. 다듬어 지지않은 데이터를 하나하나 확인해서 예외 처리를 해야했던 점
+3. API에서 겪는 서버 거절 및 요청 실패
+

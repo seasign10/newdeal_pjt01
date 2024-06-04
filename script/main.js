@@ -235,7 +235,6 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
     dfs_xy_conv("toXY", item.y, item.x);
     getWeatherData();
 
-
     let pointMove = new naver.maps.LatLng(item.y, item.x)
 
     // staitionName에 존재하지 않는 지역이라면, //

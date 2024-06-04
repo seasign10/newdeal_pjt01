@@ -82,6 +82,10 @@ const local = [
   },
 ]
 
+const warnMsg = document.querySelector('.warn_msg');
+let alreadyAjaxCnt = 0;
+let isWarn=false;
+
 // 네이버 지도 API
 document.addEventListener('DOMContentLoaded', function(){
   // 네이버 지도 API 로드
@@ -186,7 +190,7 @@ async function asyncNaverAPI(){
 
 let newOriginRegion = ''; // 미세먼지 값의 원래 이름
 // 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
-function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도 지역 적용이 되도록//////////////////////
+function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도 지역 적용이 되도록
   const newAddress = address.split(' ');
   if(newAddress.length==3){
     const newCity = newAddress[0];
@@ -202,6 +206,15 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
     }
     // 주소를 도로명으로 찾을 때, 건물명까지 입력하지 않으면 응답받지 못한다.
     if (response.v2.meta.totalCount === 0) {
+      if(alreadyAjaxCnt){ // 이미 지명도 도로명도 전부 검색이 안된다면, 반복 막기
+        if(!isWarn){
+          console.warn(`${address.split(' ')[1]} is not exist in ${address.split(' ')[0]}`);
+          alert('존재하지 않는 지명입니다.');
+          isWarn=true;
+        }
+        alreadyAjaxCnt=0;
+        return;
+      }
       // return alert('totalCount' + response.v2.meta.totalCount);
       // 찾을 수 없는 주소를 여기서 도로명 api로 처리 하기 : address
       address = address.split(' ');
@@ -225,8 +238,9 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
 
     let pointMove = new naver.maps.LatLng(item.y, item.x)
 
-    ///////////// staitionName에 존재하지 않는 지역이라면, //////////////////
+    // staitionName에 존재하지 않는 지역이라면, //
     if(!existCnt){
+      existCnt++;
       let subAddress = '';
       let YX = '';
       let absY = 0;
@@ -256,11 +270,10 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
 
             // 유클리드 거리 계산
             const distance = Math.sqrt(absY * absY + absX * absX);
-            if(distance < smallestDistance) {
+            if(distance < smallestDistance){
               smallestDistance = distance;
               closestLocation = cityRegions[i];
-            }
-            if(cityRegions.length-1==cntLength){
+            }else if(cityRegions.length-1==cntLength){
               // 반복문 마지막에 최종값
               addrRegion = closestLocation;
               
@@ -273,7 +286,7 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
           })
           }
       }
-
+      alreadyAjaxCnt=0; // 검색이 성공적으로 되면 다시 초기화
       // 맵 이동
       address = address.split(' ');
       let infowindow = new naver.maps.InfoWindow();
@@ -433,7 +446,6 @@ function statusNowUI(data){
       }
     }
   }
-
   // 값이 존재하지 않는다면
   notExist()
 
@@ -493,8 +505,43 @@ function statusNowUI(data){
   }
 }
 
+// dust_btn
+const dustPrevBtn = document.querySelector('.dust_condition_btn button.prev_btn');
+const dustNextBtn = document.querySelector('.dust_condition_btn button.next_btn');
+const dustBtn = ()=>{
+  dustPrevBtn.addEventListener('click', ()=>{
+    const ulList = document.querySelectorAll('.dust_condition ul li');
+    // active 할 수 있을 때만 작동
+    if(dustPrevBtn.classList.contains('active')==true){
+      ulList[0].style.transition = '0.5s ease'
+      ulList[1].style.left = '400px';
+      ulList[0].style.left = '0';
+
+      // 작동하면 false로 만들고, 반대편 버튼 활성화
+      dustPrevBtn.classList.remove('active');
+      dustNextBtn.classList.add('active');
+    }
+  });
+  dustNextBtn.addEventListener('click', ()=>{
+    const ulList = document.querySelectorAll('.dust_condition ul li');
+    if(dustNextBtn.classList.contains('active')==true){
+      ulList[1].style.transition = '0.5s ease'
+      ulList[1].style.left = '0';
+      ulList[0].style.left = '-400px';
+
+
+      dustNextBtn.classList.remove('active');
+      dustPrevBtn.classList.add('active');
+      
+    }
+
+  });
+}
+dustBtn();
+
 function notExist(){
-  // 반복문이 다 끝났음에도 existCnt==0 (한번도 if문을 거치지 않았다면, 즉 region이 존재하지 않았다면)
+  // 로드된 주소가 반복문이 다 끝났음에도
+  // existCnt==0 (한번도 if문을 거치지 않았다면, 즉 region이 존재하지 않았다면)
   if(existCnt==0){
     // addrCity & addrRegion 위경도 찾은 후, getData에서 유사 경도위도 값 찾기 > 기본적으로 도로명이아닌 지명으로 검색이 되므로 네이버 api 서치를 이용해도 될 것
     searchAddressToCoordinate(`${addrCity} ${addrRegion}`)
@@ -512,7 +559,7 @@ function dustListUI(dustValue, dustGrade){
   dustContent = ''; // 검색시 초기화
   dustContent = `
   <ul>
-    <li class="on">
+    <li class="animated">
   `
 for(let i=0;i<6;i++){
   // 값을 불러올 수 없을 때
@@ -529,7 +576,7 @@ for(let i=0;i<6;i++){
     if((i+1)%3==0 && (i+1)<dustValue.length){
       dustContent += `
       </li>
-      <li>
+      <li class="animated">
       `
     }
   }else{ // 값을 무사히 받았을 때
@@ -622,15 +669,26 @@ function reAppear(){
   menuChange.style.animation = 'none';
 }
 
+
 // 검색창
+// enterEvent
+function searchEnter(event) {
+	if (event.keyCode == 13) {
+    searchEvent();
+    }
+}
 // select로 city 선택
 let selectedValue = '';
 let currentRequestId = 0; //현재요청 ID
 function selectCity(local){
   const inputCity = document.querySelector('select.addr_city');
+  let cityContent = `
+  <option class="choice_city" disabled hidden selected>지역을 선택하세요.</option>
+  `;
   for(i=0;i<local.length;i++){
-    inputCity.innerHTML += `<option name="city" value="${local[i].name}">${local[i].name}</option>`
+    cityContent += `<option name="city" value="${local[i].name}">${local[i].name}</option>`
   }
+  inputCity.innerHTML = cityContent;
 
   const citySelected = document.querySelector('.addr_city');
   citySelected.addEventListener('click', ()=>{
@@ -703,66 +761,95 @@ async function matchingRegion(v, local){ // 제대로 값이 받아지는 것을
       console.error('에러 발생', error);
     }
 };
+
+// 검색 함수
+function searchEvent(){
+  if(!selectedValue){ // 도시선택 필수
+    warnMsg.innerText = '지역이 선택되지 않았습니다.'
+    warnMsg.classList.remove('hidden');
+    warnMsg.style.fontSize = '12px';
+    return; // 선택하지 않으면 아무런 함수도 실행x
+  }else{
+    const region = document.querySelectorAll('#search_list option')
+  let regions = [];
+  for(let m=0;m<region.length;m++){
+    regions.push(region[m].value);
+  }
+
+  // 이벤트리스너 내부에 정의해줘야 value값을 가져올 수 있음.
+  const searchRegion = document.querySelector('.input_search').value;
+  if(regions.indexOf(searchRegion)==-1){
+    // 나중에 위도 경도 유사한 측정소의 값을 가져올 것 (현재는 임시)
+    if(!searchRegion){
+      warnMsg.innerText = '주소가 입력되지 않았습니다.';
+      warnMsg.classList.remove('hidden');
+      warnMsg.style.fontSize = '12px';
+      return;
+    }else if(searchRegion.indexOf(' ')>-1){
+      warnMsg.innerText = '주소에 공백이 있습니다.';
+      warnMsg.classList.remove('hidden');
+      warnMsg.style.fontSize = '12px';
+      return;
+    }else if(searchRegion.slice(-1)=='동'||searchRegion.slice(-1)=='구'||searchRegion.slice(-1)=='읍'||searchRegion.slice(-1)=='리'||searchRegion.slice(-1)=='군'){
+      existCnt=0; // 없는 주소를 검색 > 근처 측정소 값을 가져오기 위한 초기화
+      warnMsg.classList.add('hidden');
+      warnMsg.style.fontSize = '0';
+      document.querySelector('.menu_list').classList.remove('active');
+      searchAddressToCoordinate(`${selectedValue} ${searchRegion}`);
+      isWarn=false; // 새로 검색 성공할 때는 초기화
+      return;
+    }
+    warnMsg.innerText = '지명만 검색 됩니다.';
+    warnMsg.classList.remove('hidden');
+    warnMsg.style.fontSize = '12px';
+    return;
+
+  }else{// 값이 존재한다면 값을 넘기자.
+    // 경고 문구 삭제 및, 검색되면 메뉴창 집어넣기
+    warnMsg.classList.add('hidden');
+    warnMsg.style.fontSize = '0';
+    document.querySelector('.input_search').value = '';
+
+    // 간혹 ()이 들어간 문구들이 있음. 이 자료를 정리해서 보내자.
+    const delTxtIdx = searchRegion.indexOf('('); // 숫자
+    let region = '';
+      if(delTxtIdx !== -1){
+        region = searchRegion.slice(0, delTxtIdx);
+      }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역
+        const idx = searchRegion.indexOf('역');
+        region = searchRegion.slice(0, idx);
+      }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬
+        const idx = searchRegion.indexOf('도');
+        region = searchRegion.slice(0, idx);
+      }else if(searchRegion.split(' ').length==2){ // 마지막 글자가 '도' 인 섬들
+        region = searchRegion.split(' ')[1];
+      }
+      else{
+        region = searchRegion;
+      }
+      document.querySelector('.menu_list').classList.remove('active');
+      // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
+      isWarn=false;
+      searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
+  }
+  }
+}
+
 //이벤트 리스너가 함수안에서 계속 실행되면 겹치므로 빼줌.
 const searchClick = document.querySelector('.search_btn');
-const warnMsg = document.querySelector('.warn_msg');
 const searchBtn = ()=>{
   // 클릭 시, 지역 값이 없을 때
   searchClick.addEventListener('click', (e)=>{
     e.preventDefault(); // 버블링 막기
-    if(!selectedValue){
-      warnMsg.innerText = '지역이 선택되지 않았습니다.'
-      warnMsg.classList.remove('hidden');
-      warnMsg.style.fontSize = '12px';
-    }else{
-      const region = document.querySelectorAll('#search_list option')
-    let regions = [];
-    for(let m=0;m<region.length;m++){
-      regions.push(region[m].value);
-    }
-
-    // 이벤트리스너 내부에 정의해줘야 value값을 가져올 수 있음.
-    const searchRegion = document.querySelector('.input_search').value;
-    if(regions.indexOf(searchRegion)==-1){
-      // 나중에 위도 경도 유사한 측정소의 값을 가져올 것 (현재는 임시)
-      warnMsg.innerText = '목록에 있는 주소를 선택해주세요.';
-      warnMsg.classList.remove('hidden');
-      warnMsg.style.fontSize = '12px'; 
-    }else{// 값이 존재한다면 값을 넘기자.
-      // 경고 문구 삭제 및, 검색되면 메뉴창 집어넣기
-      warnMsg.classList.add('hidden');
-      warnMsg.style.fontSize = '0';
-      document.querySelector('.input_search').value = '';
-
-      // 간혹 ()이 들어간 문구들이 있음. 이 자료를 정리해서 보내자.
-      const delTxtIdx = searchRegion.indexOf('('); // 숫자
-      let region = '';
-        if(delTxtIdx !== -1){
-          region = searchRegion.slice(0, delTxtIdx);
-        }else if(searchRegion.slice(-1)=='역'){ // 마지막 글자가 '역' 인 역
-          const idx = searchRegion.indexOf('역');
-          region = searchRegion.slice(0, idx);
-        }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬
-          const idx = searchRegion.indexOf('도');
-          region = searchRegion.slice(0, idx);
-        }else if(searchRegion.split(' ').length==2){ // 마지막 글자가 '도' 인 섬들
-          region = searchRegion.split(' ')[1];
-        }
-        else{
-          region = searchRegion;
-        }
-        document.querySelector('.menu_list').classList.remove('active');
-        // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
-        searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
-        
-    }
-    }
+    searchEvent()
   });
 };
 searchBtn();
 
 // 도로명을 검색할 수 있는 api
 let  callAjax = function(city, queryLocation, originRegion){
+  if(alreadyAjaxCnt){return;}else{alreadyAjaxCnt++;}
+  console.warn('Convert from road name to place name.');
   // 주소 값에 지역 까지 들어가면 검색이 되지 않음.
   const sizeCnt = 20;
 	let  data = `service=search&request=search&version=2.0&size=${sizeCnt}&page=1&query=${queryLocation}&type=road&format=json&errorformat=json&key=${VWORLD_API_KEY}`
@@ -775,16 +862,24 @@ let  callAjax = function(city, queryLocation, originRegion){
 		async: true,
 		success: function(data){
 
-      console.log(queryLocation, ' : ',data.response.status);
+      // console.log(queryLocation, ' : ',data.response.status);
       if(data.response.status=='NOT_FOUND'){
         //석모리
         if(queryLocation=='석모리'){
           searchAddressToCoordinate(`${city} 강화군 석모리`);
+        }else if(queryLocation=='묵호항'){
+          searchAddressToCoordinate(`${city} 묵호진동 묵호항`);
         }else{
-          alert('찾을 수 없습니다.');
+          warnMsg.innerText = '존재하지 않는 주소입니다.';
+          warnMsg.classList.remove('hidden');
+          warnMsg.style.fontSize = '12px';
+          if(!isWarn){
+            alert('존재하지 않는 지명입니다.');
+            isWarn=true;
+          }
+          return;
         }
       }
-
       const item =  data.response.result.items;
       let region = '';
       // city에 속하는 지역명 뽑기
@@ -794,17 +889,31 @@ let  callAjax = function(city, queryLocation, originRegion){
           // break; // return을 사용하면 함수밖으로 빠져나가기 때문에
         }
       }
-      console.log(region);
+      // console.log(region);
       
       if(!region){//없을시, 첫 로드될때 값이 없는 함수로 실행
+        console.warn('!region');
         if(queryLocation=='남항'){
           searchAddressToCoordinate(`${city} 중구 남항`);
         }else if(queryLocation=='신항'){
           searchAddressToCoordinate(`${city} 송도동 신항`);
+        }else if(queryLocation=='3공단'){
+          searchAddressToCoordinate(`${city} 진미동 3공단`);
+        }else if(queryLocation=='4공단'){
+          searchAddressToCoordinate(`${city} 옥계동 4공단`);
+        }else{
+          warnMsg.innerText = '존재하지 않는 주소입니다.';
+          warnMsg.classList.remove('hidden');
+          warnMsg.style.fontSize = '12px';
+          if(!isWarn){
+            alert('존재하지 않는 지명입니다.');
+            isWarn=true;
+          }
+          return; // 이외 값은 빠져나가기
         }
       }
       
-      if(region.indexOf('(')==-1){
+      if(region.indexOf('(')==-1){ // 괄호가 없다면,
         // 가장 마지막 단어를 주소로 입력
         const regionAddr = region.split(' ');
         // console.log(regionAddr.slice(-1)); // objecy
@@ -833,7 +942,7 @@ function setTime(){
   let times = timeNow(); 
   document.querySelector('.time_now').innerHTML = `
   <h2 class="hidden">현재 시간</h2>
-  ${times.hours} : ${times.minutes} : ${times.sec}
+  ${times.hours} : ${times.minutes} <span class="sec">${times.sec}</span>
   `;
 };
 
@@ -841,7 +950,10 @@ function setTime(){
 function statusWeatherUI(items, nowDate, nowTime){
   const afterOneHour = time.hours+1 +'';
   let cnt = 0; // 현재시간의 값 총 14개를 뽑아 줄 것  
-  
+  let listCnt=0; // 기본적으로 4일 이후의 값까지 발표되기 때문에 자료가 없을 염려는 하지 않아도 된다.
+  const weatherList = document.querySelector('.today_weather_list');
+  let weatherListContent = '';
+
   setTime();
   setInterval(setTime, 1000);
 
@@ -936,9 +1048,36 @@ function statusWeatherUI(items, nowDate, nowTime){
         cnt ++;
       }
     }
-    document.querySelector('.weather').classList.add('active');
-    document.querySelector('.wait_weather').classList.remove('active');
-  }
+    // 날씨 리스트 만들기
+    let status = '';
+    let statusIcon = '';
+    if((category=='SKY' || category=='PTY') && ((items[i].fcstDate==nowDate && items[i].fcstTime>nowTime)||(items[i].fcstDate>nowDate))){
+      if(category=='PTY' && items[i].fcstValue>0 && listCnt<12){ //눈,비 예보일때는 pty 값 가져오기
+        status = weatherPtyStaus[items[i].fcstValue];
+        statusIcon = weatherPtyIcon[items[i].fcstValue];
+        weatherListContent += `
+        <li>
+        <p>${items[i].fcstTime.slice(0, 2)}시</p>
+        <i class="fa-solid fa-${statusIcon}"></i>
+        <span>${status}</span>
+        </li>`;
+        listCnt++;
+      }else if(category=='SKY' && listCnt<12){ // 아닐 때는 sky 값
+        status = weatherSkyStaus[items[i].fcstValue];
+        statusIcon = weatherSkyIcon[items[i].fcstValue];
+        weatherListContent += `
+        <li>
+        <p>${items[i].fcstTime.slice(0, 2)}시</p>
+        <i class="fa-solid fa-${statusIcon}"></i>
+        <span>${status}<span>
+        </li>`;
+        listCnt++;
+        }
+    }
+  }//for(반복문)이 끝나면
+  weatherList.innerHTML = weatherListContent;
+  document.querySelector('.weather').classList.add('active');
+  document.querySelector('.wait_weather').classList.remove('active');
 }
 
 
@@ -1023,7 +1162,7 @@ const weatherSkyStaus = ['', '맑음', '', '구름많음', '흐림'];
 const weatherSkyIcon = ['', 'sun', '', 'cloud-sun', 'cloud'];
 // 강수형태(PTY) 코드 :  (단기) 없음(0), 비(1), 비/눈(2), 눈(3), 소나기(4) 
 const weatherPtyStaus = ['강수 없음', '비', '비/눈', '눈', '소나기'];
-const weatherPtyIcon = ['water', 'cloud-rain', 'umbrella', 'snow-flake', 'cloud-shower-heavy'];
+const weatherPtyIcon = ['water', 'cloud-rain', 'umbrella', 'snowflake', 'cloud-showers-heavy'];
 
 const getWeatherData = async ()=>{
     // 계산된 시간이 범위를 0~23 넘지 않도록 처리
@@ -1131,3 +1270,39 @@ function dfs_xy_conv(code, v1, v2) {
   // getWeatherData 로 값 넘겨주기
   return rs;
 }
+
+// weather touch scroll
+let startPoint = 0;
+let isMouseDown = false;
+let scrollLefts = 0;
+const dragWeather = document.querySelector('.today_weather_list');
+const scrollWeatherList = ()=>{
+  dragWeather.addEventListener('mousedown', (e)=>{
+    // 마우스를 눌렀을 때
+    isMouseDown = true;
+    startPoint = e.pageX - dragWeather.offsetLeft;
+    scrollLefts = dragWeather.scrollLeft;
+  });
+  dragWeather.addEventListener('mousemove', (e)=>{
+    //마우스가 움직일 때 추적
+    if(!isMouseDown) return; // mouseDown 상태가 아닐 때는 작동 x
+    e.preventDefault(); // 버블링방지
+    // e.pageX : 클릭한 x축 좌표 값 - offsetLeft : 해당 요소의 왼쪽 좌표(얼만큼 페이지와 왼쪽에서 떨어져 있는지)
+    // x : 왼쪽 여백을 제외한, 요소의 내부 x좌표
+    const x = e.pageX - dragWeather.offsetLeft;
+    // x : 현재 mousedouwn한 채 움직이고 있는 최종 마우스 좌표 - startPoint : 요소 내부에서 처음 클릭한 좌표 값(클릭한 순간 고정값)
+    // move : 클릭한 위치에서부터 얼만큼 이동했는지 | 음수값 : 마우스 오른쪽>왼쪽 => 오른쪽을 끌어옴 | 양수값 : 마우스 왼쪽>오른쪽 => 왼쪽을 끌어옴
+    const move = (x-startPoint);
+    console.log(move ,' : ', x, '-',startPoint);
+    dragWeather.scrollLeft = scrollLefts-move;
+  });
+
+  dragWeather.addEventListener('mouseup', ()=>{
+    isMouseDown=false;
+  });
+  dragWeather.addEventListener('mouseleave', ()=>{
+    isMouseDown=false;
+  });
+  
+};
+scrollWeatherList()

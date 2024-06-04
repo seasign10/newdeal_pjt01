@@ -256,15 +256,65 @@ section.dust{
   color: #854c3e;
 }
 
+/* 미세먼지 종류 넘기기 버튼 */
+#container .dust_condition_btn{
+  position: relative;
+  width: 100%;
+}
+#container .dust_condition_btn>button{
+  width: 36px;
+  height: 36px;
+  border: 1px solid silver;
+  background-color: #fff;
+  color: silver;
+}
+#container .dust_condition_btn>button.prev_btn{
+  position: absolute;
+  top: -100px;
+  left: 0.6rem;
+}
+#container .dust_condition_btn>button.next_btn{
+  position: absolute;
+  top: -100px;
+  right: 0.6rem;
+}
+#container .dust_condition_btn>button.active{
+  color: rgb(35, 35, 35);
+  border: 1px solid rgb(35, 35, 35);
+}
+#container .dust_condition_btn>button.active:hover{
+  cursor: pointer;
+  color: #fff;
+  background-color: rgb(35, 35, 35);
+}
+
+/* 미세먼지 종류 */
 #container .dust_condition>ul{
   display: flex;
   width: 400px;
-  overflow-x: auto;
-
+  overflow-x: hidden;
   height: 172px;
+  position: relative;
 }
+#container .dust_condition>ul::-webkit-scrollbar{
+  height: 4px;
+}
+#container .dust_condition>ul::-webkit-scrollbar-thumb{
+  background-color: #848484;
+}
+#container .dust_condition>ul::-webkit-scrollbar-track{
+  background-color: #d5d5d5;
+}
+
 #container .dust_condition>ul>li{
   display: flex;
+  position: absolute;
+}
+#container .dust_condition>ul>li:first-child{
+  left: 0;
+}
+#container .dust_condition>ul>li:nth-child(2){
+  left: 400px;
 }
 #container .dust_condition>ul>li.on{
 }
@@ -340,7 +390,7 @@ section.weather.active{
 }
 #container .weather .time_now{
   text-align: center;
-  font-size: 550%;
+  font-size: 700%;
   font-weight: 100;
 
   color: #fff;
@@ -358,11 +408,14 @@ section.weather.active{
 #container .weather .time_now>h2{
   font-size: 0;
 }
+#container .weather .time_now>span.sec{
+  font-size: 40px;
+  font-weight: 100;
+}
 #container .weather_status{
   display: flex;
   justify-content: space-around;
   width: 100%;
-  margin-top: 3rem;
 }
 #container .weather_status i{
   font-size: 140px;
@@ -373,6 +426,37 @@ section.weather.active{
   font-size: 36px;
   font-weight: 100;
 }
+#container ul.today_weather_list{
+  width: 480px;
+  display: flex;
+  border-top: 1px dashed #ffffff48;
+  
+  overflow-x: auto;
+  padding: 1rem;
+}
+#container ul.today_weather_list::-webkit-scrollbar{
+  height: 4px;
+}
+#container ul.today_weather_list::-webkit-scrollbar-thumb{
+  background-color: #d5d5d57d;
+}
+#container ul.today_weather_list::-webkit-scrollbar-track{
+  background-color: #0000002a;
+}
+#container ul.today_weather_list>li{
+  margin: 1rem;
+  text-align: center;
+}
+#container ul.today_weather_list>li>p{
+  font-size: 20px;
+}
+#container ul.today_weather_list>li>span{
+  width: 80px;
+}
+#container ul.today_weather_list>li>i{
+  font-size: 36px;
+  margin: 0.3rem 0 0.7rem 0;
+}
 
 #container .reh_tmp{
   display: flex;
@@ -380,10 +464,9 @@ section.weather.active{
   justify-content: space-around;
   align-items: center;
   text-align: center;
-  border-top: 1px dashed #ffffff48;
+  /* border-top: 1px dashed #ffffff48; */
   width: 80%;
-  padding-top: 3rem;
-  margin-top: 3rem;
+  padding-top: 2rem;
 }
 #container .reh_tmp .reh .icon_value{
   display: flex;
@@ -394,7 +477,7 @@ section.weather.active{
   align-items: center;
 }
 #container .reh_tmp .tmp{
-  margin-top: 3rem;
+  margin-top: 1rem;
 }
 #container .reh_tmp h4{
   font-size: 24px;
@@ -461,6 +544,7 @@ section.weather.active{
   /* 날씨와 미세먼지를 탭으로 보여줄 것 */
   #container section.weather.on{
     display: flex;
+    padding-top: 3rem;
     justify-content: center;
     align-items: center;
     border-radius: 0;

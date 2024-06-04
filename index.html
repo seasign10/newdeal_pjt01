@@ -30,10 +30,9 @@
         <h2 class="hidden">검색창</h2>
         <h3>주소 검색</h3>
         <select class="addr_city" name="addr_city" id="addr_city">
-          <option class="choice_city" disabled hidden selected>지역을 선택하세요.</option>
           <!-- js로 옵션 넣기 -->
         </select>
-        <input class="input_search" type="text" placeholder="주소를 입력하세요." list="search_list">
+        <input class="input_search" type="text" placeholder="주소를 입력하세요." onkeyup="searchEnter(event)" list="search_list">
         <input class="search_btn" type="submit" value="검색" onclick="" />
         <div class="warn_msg hidden"></div>
         <div class="search_select"></div>
@@ -64,6 +63,10 @@
         </div>
         <!-- 종류별 -->
         <div class="dust_condition"></div>
+        <div class="dust_condition_btn">
+          <button class="prev_btn"><i class="fa-solid fa-arrow-left"></i></button>
+          <button class="next_btn active"><i class="fa-solid fa-arrow-right"></i></button>
+        </div>
         <!-- 지도 -->
         <div id="map" class="naver_map" style="width:400px;height:400px;"></div>
       </section>
@@ -81,6 +84,9 @@
             <!-- 강수상태 -->
             <div class="pty"></div>
           </div>
+          <ul class="today_weather_list">
+            
+          </ul>
 
           <div class="reh_tmp">
             <!-- 습도 -->

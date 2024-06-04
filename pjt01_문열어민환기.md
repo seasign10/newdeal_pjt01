@@ -694,7 +694,39 @@ const local = [
   };
   ```
 
-  
+
+
+- selectedCity 의 값 증가
+
+  ```js
+  let selectedValue = '';
+  function selectCity(local){
+    const inputCity = document.querySelector('select.addr_city');
+    let cityContent = ''; // 변수로 담아서
+    for(i=0;i<local.length;i++){
+      cityContent += `<option name="city" value="${local[i].name}">${local[i].name}</option>`
+    }
+    inputCity.innerHTML = cityContent; // 재할당
+  ```
+
+
+
+- 엔터키로도 검색할 수 있도록 수정
+
+  ```js
+  // enterEvent
+  function searchEnter(event) {
+  	if (event.keyCode == 13) {
+      searchEvent();
+      }
+  }
+  ```
+
+  - 최신 브라우저에서는 `window.event` 가 아닌, ` onkeyup="searchEnter(event)"` 로 event 인자를 제대로 보내서 명시적으로 작성하는 것으로 바뀌었다.
+
+황금동
+
+
 
 ---
 
@@ -720,4 +752,6 @@ const local = [
     - 객체로 값을 전달하니
 
       결과 :  `{year:2024 ,month:'05', date:31}` 를 받아올 수 있었다.
+
+- 
 

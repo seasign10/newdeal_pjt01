@@ -1080,7 +1080,6 @@ function statusWeatherUI(items, nowDate, nowTime){
         }
       }
       if(category=='TMP' && tmpCnt<12 && timeRules){
-        console.log((items[i]));
         for(let t=0;t<weatherObj.length;t++){
           if(weatherObj[t].type=='TMP'){
             tmpList.push(items[i].fcstValue + weatherObj[t].unit);

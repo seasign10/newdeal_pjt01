@@ -724,11 +724,7 @@ const local = [
 
   - 최신 브라우저에서는 `window.event` 가 아닌, ` onkeyup="searchEnter(event)"` 로 event 인자를 제대로 보내서 명시적으로 작성하는 것으로 바뀌었다.
 
-황금동
 
-
-
----
 
 - 날씨 (기상청 단기예보 API)
 
@@ -753,5 +749,10 @@ const local = [
 
       결과 :  `{year:2024 ,month:'05', date:31}` 를 받아올 수 있었다.
 
-- 
 
+
+---
+
+## :bookmark: 힘들었던 점
+
+1. 한페이지에서   

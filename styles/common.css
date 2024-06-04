@@ -58,24 +58,28 @@ span{text-align: center;display: inline-block;}
   background-color: #fff;
 }
 #header .menu_list>ul{
-  margin-top: 1rem;
   padding: 1rem;
+  margin-bottom: 3rem;
 }
 #header .menu_list>ul>li{
   height: 60px;
-  text-align: center;
+  text-align: end;
   line-height: 60px;
   padding-right: 1rem;
   background-color: #fff;
   border-bottom: 1px solid #e4e8e4;
+  margin-top: 1rem;
 }
 #header .menu_list>ul>li>a{
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 100;
+  font-style: italic;
   color: #172e12;
 }
 #header .menu_list>ul>li>a:hover{
-  color: #33743b;
+  /* color: #709c53; */
+  font-weight: 700;
+  transition: 0.5s ease;
 }
 #header .menu_list .menu_icon{
   background-color: #172e12;
@@ -93,6 +97,7 @@ span{text-align: center;display: inline-block;}
 #header .search{
   padding: 1rem;
   text-align: center;
+  background-color: #f4f6e9;
 }
 #header .search .addr_city{
   display: inline-block;
@@ -123,10 +128,15 @@ span{text-align: center;display: inline-block;}
 }
 
 #header .search h3{
+  padding-bottom: 0.4rem;
   margin-bottom: 0.7rem;
-  font-weight: 100;
+  margin-left: 0.5rem;
+  font-weight: 300;
   color: #485745;
+  border-bottom: 1px solid #9bad97;
   font-size: 20px;
+  text-align: left;
+  width: 150px;
 }
 #header .web_name{
   color: #fff;

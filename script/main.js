@@ -1,3 +1,9 @@
+
+// survice_key
+const API_KEY = config.apikey;
+const NAVER_API_CLIENT_ID = config.NAVER_API_CLIENT_ID;
+const VWORLD_API_KEY = config.vworld_apikey;
+
 // base | 새로고침 시, window 가장 위로
 window.onload = function(){
   setTimeout(function(){
@@ -5,10 +11,23 @@ window.onload = function(){
   },100);
 };
 
-// survice_key
-const API_KEY = config.apikey;
-const NAVER_API_CLIENT_ID = config.NAVER_API_CLIENT_ID;
-const VWORLD_API_KEY = config.vworld_apikey;
+// home 
+const containerList = document.querySelectorAll('.container');
+const home = ()=>{
+  // 페이지를 이동하거나 리디렉션 할 경우에는 필요하지만, 한 페이지에서 이동 할 것이므로 필요 없다.
+  // location.href = '~.html';
+  containerList[0].classList.add('on'); // main
+
+  // page(menu)가 여럿이 될 경우에는 반복문을 돌리는것이 좋을 것 같음
+  containerList[1].classList.remove('on'); //aside.recoTour
+  menu.classList.remove('active'); // 메뉴 사라짐
+};
+
+const recoTour = ()=>{
+  containerList[0].classList.remove('on'); // main
+  containerList[1].classList.add('on'); //aside.recoTour
+  menu.classList.remove('active'); // 메뉴 사라짐
+};
 
 // local addr data
 const local = [
@@ -82,6 +101,9 @@ const local = [
   },
 ]
 
+const menu = document.querySelector('.menu_list');
+const menuBtn = document.querySelector('.menu_bar');
+const menuInBtn = document.querySelector('.menu_icon i');
 const warnMsg = document.querySelector('.warn_msg');
 let alreadyAjaxCnt = 0;
 let isWarn=false;
@@ -207,9 +229,9 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
     // 주소를 도로명으로 찾을 때, 건물명까지 입력하지 않으면 응답받지 못한다.
     if (response.v2.meta.totalCount === 0) {
       if(alreadyAjaxCnt){ // 이미 지명도 도로명도 전부 검색이 안된다면, 반복 막기
-        if(!isWarn){
+        if(!isWarn && existCnt){
           console.warn(`${address.split(' ')[1]} is not exist in ${address.split(' ')[0]}`);
-          alert('존재하지 않는 지명입니다.');
+          alert(`존재하지 않는 지명입니다. '동', '구', '면', '읍', '리', '군' 등을 포함하여 입력해주세요.`);
           isWarn=true;
         }
         alreadyAjaxCnt=0;
@@ -294,7 +316,6 @@ function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도
       infowindow.open(map, map.getCenter()); // 현재 위치에 인포 윈도우를 엽니다.
       updateInfo(address[0], address[1]); // 0 city | 1 region
       getData();
-
   });
 }
 
@@ -339,6 +360,7 @@ let cityRegions = [];
 let localDust = '';
 // json
 const getData = async (LatLng)=>{
+  existCnt=0; // 다시 초기화
   // 시도별 실시간 측정정보 조회
   let localCode = ''
   for(let i=0;i<local.length;i++){
@@ -352,7 +374,12 @@ const getData = async (LatLng)=>{
 
   try{ // 데이터 응답에따른 url요청 변화
     const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
-    const response = await fetch(url);
+    // const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
     if(!response.ok){
       throw new Error('서버에서 데이터를 가져오는데 실패했습니다.');
     }
@@ -383,9 +410,6 @@ const getData = async (LatLng)=>{
       </dl>
       `
     queryIcon();
-    const menu = document.querySelector('.menu_list');
-    const menuBtn = document.querySelector('.menu_bar');
-    const menuInBtn = document.querySelector('.menu_icon i');
     reAppear()
     menuList(menu, menuBtn, menuInBtn);
     selectCity(local)
@@ -502,6 +526,7 @@ function statusNowUI(data){
     emoji.querySelector('i').style.color = statusColor[dustTotalGrade-1];
     document.querySelector('.total_status').innerHTML = dustLv[dustTotalGrade-1];
   }
+  document.querySelector('#footer').classList.add('on');
 }
 
 // dust_btn
@@ -625,6 +650,7 @@ function allDust(data, i){
 // 잠시만 기다려주세요.
 function wait(){
   document.querySelector('.wait').classList.remove('active');
+  menuBtn.classList.add('load_on');
   document.querySelector('.container_box').classList.add('on');
 };
 
@@ -777,8 +803,9 @@ function searchEvent(){
 
   // 이벤트리스너 내부에 정의해줘야 value값을 가져올 수 있음.
   const searchRegion = document.querySelector('.input_search').value;
+  const regionUnit = ['동', '구', '면', '읍', '리', '군'];
+
   if(regions.indexOf(searchRegion)==-1){
-    // 나중에 위도 경도 유사한 측정소의 값을 가져올 것 (현재는 임시)
     if(!searchRegion){
       warnMsg.innerText = '주소가 입력되지 않았습니다.';
       warnMsg.classList.remove('hidden');
@@ -789,11 +816,11 @@ function searchEvent(){
       warnMsg.classList.remove('hidden');
       warnMsg.style.fontSize = '12px';
       return;
-    }else if(searchRegion.slice(-1)=='동'||searchRegion.slice(-1)=='구'||searchRegion.slice(-1)=='읍'||searchRegion.slice(-1)=='리'||searchRegion.slice(-1)=='군'){
-      existCnt=0; // 없는 주소를 검색 > 근처 측정소 값을 가져오기 위한 초기화
+      // sidoName이 없는 지역을 검색할 때 | 즉 existCnt가 0이면
+    }else if(regionUnit.indexOf(searchRegion.slice(-1)>-1)){
       warnMsg.classList.add('hidden');
       warnMsg.style.fontSize = '0';
-      document.querySelector('.menu_list').classList.remove('active');
+      menu.classList.remove('active');
       searchAddressToCoordinate(`${selectedValue} ${searchRegion}`);
       isWarn=false; // 새로 검색 성공할 때는 초기화
       return;
@@ -826,9 +853,10 @@ function searchEvent(){
       else{
         region = searchRegion;
       }
-      document.querySelector('.menu_list').classList.remove('active');
+      menu.classList.remove('active');
       // 주소 / 지도를 검색할 지역 / 미세먼지를 검색할 지역(가공되지않은 원래의 미세먼지 region)
       isWarn=false;
+      
       searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
   }
   }
@@ -1321,3 +1349,39 @@ const scrollWeatherList = ()=>{
   
 };
 scrollWeatherList()
+
+// modal
+let scrollPosition = 0;
+function infoModal(){
+  const infoMenu = document.querySelector('.aboutInfo');
+  const modal = document.querySelector('.modal_background');
+  const modalBtn = document.querySelector('.modal button');
+  const body = document.body;
+  infoMenu.addEventListener('click', ()=>{
+    modal.classList.add('active');
+
+    // 스크롤 위치 저장 | 구형 브라우저 일 경우 scrollY가 먹히지 않을 수 있다.
+    scrollPosition = window.scrollY || document.documentElement.scrollTop; 
+    body.style.position = 'fixed';
+
+    // position이 고정되면서 width가 100%가 되지 않는 문제가 발생
+    body.style.width = '100%';
+    console.log(scrollPosition);
+    body.style.top = `-${scrollPosition}px`;
+
+    // 모달이 나타났을 때 스크롤 방지
+    body.style.overflow = 'hidden';
+
+    // 메뉴 사라짐
+    menu.classList.remove('active');
+  });
+  modalBtn.addEventListener('click', ()=>{
+    modal.classList.remove('active');
+    body.style.overflow = 'auto';
+    
+    body.style.position = '';
+    body.style.top = '';
+    window.scrollTo(0, scrollPosition);
+  });
+};
+infoModal()

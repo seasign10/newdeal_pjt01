@@ -1,6 +1,6 @@
 /* reset */
 *{margin: 0;padding: 0;list-style: none;font-weight: normal;font-size: 16px;text-decoration: none;}
-html, body{min-width: 500px;}
+html, body{min-width: 500px;height: 100%;}
 
 /* base */
 .hidden{display: inline-block;width: 0;height: 0;font-size: 0;z-index: -999;}
@@ -22,12 +22,21 @@ span{text-align: center;display: inline-block;}
   /* 지도api의 네이버 로고가 z-index값이 높아서 가려주기 위함 */
   z-index: 999;
 }
+#header .home>i{
+  font-size: 32px;
+  color: #fff;
+  margin-right: 1rem;
+}
+#header .home>i:hover{
+  color: #172e12;
+  cursor: pointer;
+}
 #header .menu_bar{
   font-size: 36px;
   color: #fff;
   margin-left: 1rem;
 }
-#header .menu_bar:hover{
+#header .menu_bar.load_on:hover{
   color: #172e12;
   cursor: pointer;
 }
@@ -145,15 +154,128 @@ span{text-align: center;display: inline-block;}
   font-style: italic;
 }
 
+/* 모달 */
+.modal_background{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  
+  /* visibility hidden 때문에 보이지는 않지만, 여전히 존재하는 상태이기 때문에 transition이 이상하게 움직이므로 자리배치는 그대로 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  
+  /* display는 transition에 적용이 안되므로, 투명도를 이용 */
+  /* display: none; */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 1s ease, visibility 1s ease;
+}
+.modal_background.active{
+  opacity: 1;
+  visibility: visible;
+  z-index: 999;
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal{
+  width: 450px;
+  background-color: #fff;
+  border-radius: 0 0 4px 4px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  position: relative;
+  border: 4px solid #172e12;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+
+  /* transform: translateY(-50px); */
+  transition: transform 1s ease, opacity 1s ease;
+}
+.modal p{
+  text-align: start;
+  width: 100%;
+}
+.modal_top{
+  position: absolute;
+  top: -50px;
+  width:calc(100% + 8px);
+  height: 50px;
+  background-color: #172e12;
+  color: #fff;
+  text-align: center;
+  line-height: 50px;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal_top h3{
+  margin-left: 1rem;
+  font-size: 20px;
+  font-weight: 600;
+}
+.modal>p{
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  color: #172e12;
+  line-height: 24px;
+}
+.modal>p:nth-child(2){
+  font-size: 20px;
+}
+.modal>p:last-child{
+  font-size: 18px;
+}
+.modal>p:last-child>strong{
+  font-size: 18px;
+}
+.modal>p:nth-child(2)>strong{
+  color: #fff;
+  background-color: #33743b;
+  padding: 0.2rem 0.5rem;
+  font-style: italic;
+  font-size: 20px;
+  font-weight: 700;
+}
+.modal>p>strong.strong{
+  font-weight: 500;
+  background-color: #ebf2c2;
+}
+.modal button{
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: rgb(248, 79, 41);
+  border: none;
+  color: #fff;
+  margin-top: 1rem;
+  margin: 0;
+  margin-right: 0.5rem;
+}
+.modal button:hover{
+  background-color: #6b1e11;
+  cursor: pointer;
+}
 
 
-/* 중단 - 미세먼지 */
-#container{
+
+/* 중단 */
+main#container{
+  display: none;
+}
+main#container.on{
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 8rem;
-  margin-bottom: 3rem;
   height: 1210px;
 }
 #container .tap{
@@ -165,7 +287,7 @@ span{text-align: center;display: inline-block;}
   font-size: 24px;
   width: 100px;
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   cursor: pointer;
 }
 #container .tap h2:hover{
@@ -189,6 +311,7 @@ span{text-align: center;display: inline-block;}
   width: 100%;
   height: 100%;
 }
+/* 중단 - 미세먼지 */
 section.dust{
   display: flex;
   justify-content: center;
@@ -392,7 +515,7 @@ section.weather.active{
   height: 1110px;
 }
 #container .weather_box{
-  height: 810px;
+  height: 83%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -437,7 +560,7 @@ section.weather.active{
   font-weight: 100;
 }
 #container ul.today_weather_list{
-  width: 480px;
+  width: 80%;
   display: flex;
   border-top: 1px dashed #ffffff48;
   
@@ -523,9 +646,91 @@ section.weather.active{
   font-weight: 100;
 }
 
+/* 중단 - 추천 관광지 */
+aside.container{
+  display: none;
+}
+aside.container.on{
+  display: flex;
+  flex-direction: column;
+  height: 1110px;
+}
+aside.container .reco_tour{
+  display: none;
+}
+aside.container .reco_tour.on{
+  margin-top: 8rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+aside.container .reco_tour>h2{
+  font-size: 40px;
+}
+aside.container .reco_tour .tour_list{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  min-width: 492px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+aside.container .tour_list>.card{
+  background-color: pink;
+
+  overflow: hidden;
+  margin: 1rem;
+  height: 348px;
+  width: 440px;
+  border-radius: 10px;
+  
+}
+aside.container .tour_list>.card .tour_img{
+  background-color: rgb(255, 219, 225);
+  width: 440px;
+  height: 200px;
+}
+aside.container .tour_list>.card>dl{
+  width: 100%;
+  height: 145.5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* align-items: center; */
+}
+aside.container .tour_list>.card dt{
+  padding: 1rem 1rem 0.5rem 1rem;
+  height: 39px;
+}
+aside.container .tour_list>.card h4{
+  font-size: 20px;
+  font-weight: 700;
+}
+aside.container .tour_list>.card dd{
+  padding: 0.5rem 1rem 1rem 1rem;
+  height: 58.5px;
+}
+aside.container .reco_tour .btn_box{
+  display: flex;
+  width: 440px;
+  justify-content: end;
+}
+aside.container .reco_tour button{
+  margin-left: 0.5rem;
+}
+aside.container .no_reco_data{
+  color: gray;
+  }
+
+
+
 
 /* 하단 */
-#footer{background-color: #33743b;height: 32px;position: relative;bottom: -16px;;}
+#footer{display: none; background-color: #33743b;height: 32px;position: relative;width: 100%;bottom: 0;}
+#footer.on{display: block; background-color: #33743b;height: 32px;position: relative;width: 100%;bottom: 0;}
 
 
 /* 편의성 및 접근성 style */
@@ -554,8 +759,8 @@ section.weather.active{
   /* 날씨와 미세먼지를 탭으로 보여줄 것 */
   #container section.weather.on{
     display: flex;
-    padding-top: 3rem;
-    justify-content: center;
+    /* padding-top: 3rem; */
+    justify-content: end;
     align-items: center;
     border-radius: 0;
     height: 100%;
@@ -581,5 +786,13 @@ section.weather.active{
 @media(min-width: 999px){
   #container .tap.active{
     display: none;
+  }
+}
+@media(min-width:976px){
+  aside.container.on{
+    height: 740px;
+  }
+  aside.container .reco_tour .btn_box{
+    width: 908px;
   }
 }

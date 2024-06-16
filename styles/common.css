@@ -94,19 +94,21 @@ span{text-align: center;display: inline-block;}
   background-color: #172e12;
   text-align: end;
 }
-#header .menu_list i{
+#header .menu_list .menu_icon i{
   padding: 1rem;
   font-size: 36px;
   color: #fff;
   cursor: pointer;
 }
-#header .menu_list i:hover{
+#header .menu_list .menu_icon i:hover{
   color: #33743b;
 }
 #header .search{
   padding: 1rem;
   text-align: center;
   background-color: #f4f6e9;
+  border-radius: 0 0 10px 0;
+  padding: 14px;
 }
 #header .search .addr_city{
   display: inline-block;
@@ -511,7 +513,7 @@ section.weather.active{
   justify-content: center;
   border-radius: 20px;
   color: #fff;
-  background: linear-gradient(#ffffff00 2%, #086375, #5c3063);
+  background: linear-gradient(#ffffff00 0.1%, #086375, #5c3063);
   height: 1110px;
 }
 #container .weather_box{
@@ -522,11 +524,17 @@ section.weather.active{
   justify-content: space-around;
 }
 #container .weather .time_now{
+  text-shadow: 1px 2px 5px #08637583;
+
   text-align: center;
   font-size: 700%;
-  font-weight: 100;
-
+  /* font-weight: 100; */
   color: #fff;
+
+  /* google font */
+  font-family: "Do Hyeon", sans-serif;
+  font-weight: 400;
+  font-style: normal;
   
   /* 글자색 적용 */
   /* background: linear-gradient(#086375, #fff);
@@ -742,6 +750,11 @@ aside.container .no_reco_data{
 .wait.active{display: flex;flex-direction: column;align-items: center;position: fixed; top: 50%;}
 .wait>span{font-size: 28px;font-weight: 700;color: rgb(30, 29, 29);font-style: italic;}
 .wait>i{margin-left: 0.2rem;color: silver;font-size: 32px;margin-bottom: 1rem;}
+.wait_data{border-radius: 0 0 10px 0; width: 100%; height: 500px; z-index: 1;background-color: rgba(0, 0, 0, 0.3);position: absolute;display: flex;justify-content: center;align-items: center;}
+.wait_data>i{padding: 1rem;font-size: 36px;color: #fff;animation: rotate_icon 3s linear infinite;transform-origin: 50% 50%;}
+.wait_data.disappear{display: none;}
+.plz_reload{display: none; color: red; margin-top: 2rem; width: 100%;height: 100%; z-index: 1; justify-content: center; align-items: center;}
+.plz_reload.active{display: flex;}
 /* rotate_image 라는 이름을 가진 키프레임을 실행
   6s : 6초에 한번씩 (animation-duration)
   linear : 동일한 속도로 (animation-timing-function)*/
@@ -760,7 +773,7 @@ aside.container .no_reco_data{
   #container section.weather.on{
     display: flex;
     /* padding-top: 3rem; */
-    justify-content: end;
+    justify-content: center;
     align-items: center;
     border-radius: 0;
     height: 100%;

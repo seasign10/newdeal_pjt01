@@ -1,3 +1,5 @@
+// 백업 파일
+
 // survice_key
 const API_KEY = config.apikey;
 const NAVER_API_CLIENT_ID = config.NAVER_API_CLIENT_ID;
@@ -10,6 +12,17 @@ window.onload = function(){
   },100);
 };
 
+// home 
+const containerList = document.querySelectorAll('.container');
+const home = ()=>{
+  // 페이지를 이동하거나 리디렉션 할 경우에는 필요하지만, 한 페이지에서 이동 할 것이므로 필요 없다.
+  // location.href = '~.html';
+  containerList[0].classList.add('on'); // main
+
+  // page(menu)가 여럿이 될 경우에는 반복문을 돌리는것이 좋을 것 같음
+  containerList[1].classList.remove('on'); //aside.recoTour
+  menu.classList.remove('active'); // 메뉴 사라짐
+};
 
 const recoTour = ()=>{
   containerList[0].classList.remove('on'); // main
@@ -199,18 +212,12 @@ async function asyncNaverAPI(){
     }
 }
 
-// 반복 함수 제어
-let searchCnt = 0;
-const searchMax = 1;
 
 let newOriginRegion = ''; // 미세먼지 값의 원래 이름
 // 주소 > 좌표 : 전역으로 넣어서 호출할 수 있게
 function searchAddressToCoordinate(address){ // 여기에서 날씨 함수에도 지역 적용이 되도록
-console.log('지명 검색을 시작합니다.');
-if(searchCnt>searchMax){console.warn('repeat break...'); return;} // 반복을 막기 위함
-searchCnt++;
   const newAddress = address.split(' ');
-  if(newAddress.length==3){ // address가 3개로 나눠졌을 때 처리
+  if(newAddress.length==3){
     const newCity = newAddress[0];
     const newRegion = newAddress[1];
     newOriginRegion = newAddress[2];
@@ -224,13 +231,11 @@ searchCnt++;
     }
     // 주소를 도로명으로 찾을 때, 건물명까지 입력하지 않으면 응답받지 못한다.
     if (response.v2.meta.totalCount === 0) {
-      console.log('도로명으로 재검색 합니다.');
       if(alreadyAjaxCnt){ // 이미 지명도 도로명도 전부 검색이 안된다면, 반복 막기
         // if(!isWarn && existCnt){
         if(!isWarn && !existCnt){ 
           console.warn(`${address.split(' ')[1]} is not exist in ${address.split(' ')[0]}`);
-          // '리'는 검색이 안되는 경우가 많다.
-          alert(`검색되지 않는 지명입니다. '시', '군', '구', '면', '읍', '동' 등을 포함하여 입력해주세요.`);
+          alert(`검색되지 않는 지명입니다. '동', '구', '면', '읍', '리', '군', '시' 등을 포함하여 입력해주세요.`);
           isWarn=true;
         }
         alreadyAjaxCnt=0;
@@ -247,17 +252,19 @@ searchCnt++;
       return; // 여기서 함수를 빠져나가지 않으면 아래 코드가 그대로 진행된다.
       // return alert('도로명 주소는 찾을 수 없습니다.');
     }
-
     document.querySelector('.input_search').value = ''; // 값 비워주기
+
     item = response.v2.addresses[0];
     // 좌표
+    // point = new naver.maps.Point(item.x, item.y);
+
     // 새로 검색되어 입력되는 주소 | getWeatherData
     dfs_xy_conv("toXY", item.y, item.x);
     getWeatherData();
 
     let pointMove = new naver.maps.LatLng(item.y, item.x)
 
-    // staitionName에 존재하지 않는 지역이라면, 근처 측정소의 값을 가져오도록
+    // staitionName에 존재하지 않는 지역이라면, //
     if(!existCnt){
       existCnt++;
       let subAddress = '';
@@ -592,7 +599,6 @@ function notExist(){
     // addrCity & addrRegion 위경도 찾은 후, getData에서 유사 경도위도 값 찾기 > 기본적으로 도로명이아닌 지명으로 검색이 되므로 네이버 api 서치를 이용해도 될 것
     searchAddressToCoordinate(`${addrCity} ${addrRegion}`)
     existCnt = 0; // 다시 0
-    return;
   }else{
     // 전부 필터를 거쳐서 가공했음에도 돌아온 데이터(지명)
     // if()
@@ -707,6 +713,13 @@ function menuList(menu, menuBtn, menuInBtn){
   menuInBtn.addEventListener('click', ()=>{
     menu.classList.remove('active');
   });
+
+  // menu.addEventListener('mouseleave', ()=>{
+  //   console.log('leave')
+  //   setTimeout(()=>{
+  //     menu.classList.remove('active');
+  //   },1000);
+  // });
 }
 // 메뉴도 랜더링 될 동안 wait 알려주기
 const menuChange = document.querySelector('.fa-bars');
@@ -760,7 +773,6 @@ function selectCity(local){
   });
 }
 
-const regionUnit = ['동', '구', '면', '읍', '리', '군', '시'];
 // slectCity 함수에 들어가있으면, 이벤트 리스너가 여러번 등록되는 것을 방지
 async function matchingRegion(v, local){ // 제대로 값이 받아지는 것을 확인
   let localCode = '';
@@ -779,7 +791,7 @@ async function matchingRegion(v, local){ // 제대로 값이 받아지는 것을
       const url = new URL(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${API_KEY}&returnType=json&numOfRows=130&pageNo=1&sidoName=${localCode}&ver=1.0`);
       const response = await fetch(url, {
         headers: {
-          'Accept': "application / json",
+          Accept: "application / json",
         },method: "GET",
       });
       if(!response.ok){
@@ -804,16 +816,13 @@ async function matchingRegion(v, local){ // 제대로 값이 받아지는 것을
         const addData = document.querySelector('.search_select');
         let sortData = [];
         for(let k=0;k<localDust.length;k++){
-          // regionUnit 이 포함되어 있는 지역명만 넣기 
-          if(regionUnit.indexOf(localDust[k].stationName.slice(-1))!==-1){
-            sortData.push(localDust[k].stationName);
-          }
+          sortData.push(localDust[k].stationName);
         }
         sortData = sortData.sort();
 
         // 정렬한 데이터 삽입
         let dataList = `<datalist id="search_list">`
-        for(let k=0;k<sortData.length;k++){
+        for(let k=0;k<localDust.length;k++){
           dataList += `<option value="${sortData[k]}" />`
         }
         dataList += `</datalist>`
@@ -823,25 +832,14 @@ async function matchingRegion(v, local){ // 제대로 값이 받아지는 것을
       console.error('에러 발생', error);
     }
 };
-
+let searchCnt = 0;
+const searchMax = 3;
 
 // 검색 함수
 function searchEvent(){
-  searchCnt = 0; // 검색할 때마다 초기화
-
-  // 검색함수가 실행될 때 마다 dust page를 초기화
-  // DOM이 로드되기 전에 실행되면, ulList가 null이 되어서 에러 발생되므로 여기서 실행
-  const ulList = document.querySelectorAll('.dust_condition ul li');
-  ulList[1].style.left = '400px';
-  ulList[0].style.left = '0';
-  // page btn도 초기화
-  document.querySelector('.dust_condition_btn button.prev_btn').classList.remove('active');
-  document.querySelector('.dust_condition_btn button.next_btn').classList.add('active');
-
-  // if(searchCnt==0){
-  //   searchCnt++;
-  // }else return;
-  // console.log('search method...');
+  searchCnt = 0;
+  searchCnt++;
+  console.log('검색 함수 실행');
   if(!selectedValue){ // 도시선택 필수
     warnMsg.innerText = '지역이 선택되지 않았습니다.'
     warnMsg.classList.remove('hidden');
@@ -849,13 +847,14 @@ function searchEvent(){
     return; // 선택하지 않으면 아무런 함수도 실행x
   }else{
     const region = document.querySelectorAll('#search_list option')
-    let regions = [];
-    for(let m=0;m<region.length;m++){
-      regions.push(region[m].value);
-    }
+  let regions = [];
+  for(let m=0;m<region.length;m++){
+    regions.push(region[m].value);
+  }
 
   // 이벤트리스너 내부에 정의해줘야 value값을 가져올 수 있음.
   const searchRegion = document.querySelector('.input_search').value;
+  const regionUnit = ['동', '구', '면', '읍', '리', '군', '시'];
 
   if(regions.indexOf(searchRegion)==-1){
     if(!searchRegion){
@@ -900,8 +899,8 @@ function searchEvent(){
       }else if(searchRegion.slice(-1)=='도'){ // 마지막 글자가 '도' 인 섬
         const idx = searchRegion.indexOf('도');
         region = searchRegion.slice(0, idx);
-      }else if(searchRegion.split(' ').length==2){ // 두개의 단어로 이루어진 지역
-        region = searchRegion.split(' ')[1]; // 두번째 단어
+      }else if(searchRegion.split(' ').length==2){ // 마지막 글자가 '도' 인 섬들
+        region = searchRegion.split(' ')[1];
       }
       else{
         region = searchRegion; 
@@ -911,7 +910,6 @@ function searchEvent(){
       isWarn=false;
       
       searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
-      return;
   }
   }
 }
@@ -952,44 +950,15 @@ let  callAjax = function(city, queryLocation, originRegion){
 
       // console.log(queryLocation, ' : ',data.response.status);
       if(data.response.status=='NOT_FOUND'){
+        //석모리
         if(queryLocation=='석모리'){
           searchAddressToCoordinate(`${city} 강화군 석모리`);
           return;
-        }
-        else if(queryLocation=='화산리'){
-          searchAddressToCoordinate(`${city} 울주군 화산리`);
+        }else if(queryLocation=='묵호항'){
+          searchAddressToCoordinate(`${city} 묵호진동 묵호항`);
           return;
-        }
-        else if(queryLocation=='부곡3동'){
-          searchAddressToCoordinate(`${city} 군포시 부곡3동`);
-          return;
-        }
-        else if(queryLocation=='한강신도시'){
-          searchAddressToCoordinate(`${city} 김포시 한강신도시`);
-          return;
-        }
-        else if(queryLocation=='상리'){
-          searchAddressToCoordinate(`${city} 양구군 상리`);
-          return;
-        }
-        else if(queryLocation=='파도리'){
-          searchAddressToCoordinate(`${city} 태안군 파도리`);
-          return;
-        }
-        else if(queryLocation=='태하리'){
-          searchAddressToCoordinate(`${city} 울릉군 태하리`);
-          return;
-        }
-        else if(queryLocation=='저구리'){
-          searchAddressToCoordinate(`${city} 남부면 저구리`);
-          return;
-        }
-        else if(queryLocation=='고산리'){
-          searchAddressToCoordinate(`${city} 한경면 고산리`);
-          return;
-        }
-        else if(queryLocation=='장재리'){
-          searchAddressToCoordinate(`${city} 아산시 장재리`);
+        }else if(queryLocation=='남악.오룡'){
+          searchAddressToCoordinate(`${city} 무안군 남악.오룡`);
           return;
         }
         else{
@@ -1002,13 +971,12 @@ let  callAjax = function(city, queryLocation, originRegion){
           }
           return;
         }
-        
       }
       const item =  data.response.result.items;
-      // console.log(item);
+      console.log(item);
       let region = '';
 
-      const regionMap = { // district(지역명)에는 축약 되지 않은 지역명이 들어가 있음
+      const regionMap = {
         // "서울": "서울특별시",
         // "부산": "부산광역시",
         // "대구": "대구광역시",
@@ -1037,9 +1005,24 @@ let  callAjax = function(city, queryLocation, originRegion){
           break; // return을 사용하면 함수밖으로 빠져나가기 때문에
         }
       }
+      console.log("region : " ,region);
 
       if(!region){// 검색은 되었으나, 없을시 첫 로드될때 값이 없는 함수로 실행
-          warnMsg.innerText = '검색되지 않는 주소입니다.';
+        console.warn('!region');
+        if(queryLocation=='남항'){
+          searchAddressToCoordinate(`${city} 중구 남항`);
+          return;
+        }else if(queryLocation=='신항'){
+          searchAddressToCoordinate(`${city} 송도동 신항`);
+          return;
+        }else if(queryLocation=='3공단'){
+          searchAddressToCoordinate(`${city} 진미동 3공단`);
+          return;
+        }else if(queryLocation=='4공단'){
+          searchAddressToCoordinate(`${city} 옥계동 4공단`);
+          return;
+        }else{
+          warnMsg.innerText = '존재하지 않는 주소입니다.';
           warnMsg.classList.remove('hidden');
           warnMsg.style.fontSize = '12px';
           if(!isWarn){
@@ -1047,27 +1030,40 @@ let  callAjax = function(city, queryLocation, originRegion){
             isWarn=true;
           }
           return; // 이외 값은 빠져나가기
-
+        }
+        //////////////////////////////
       }
       if(region.indexOf('(')==-1){ // 괄호가 없다면,
+        // 가장 마지막 단어를 주소로 입력
         const regionAddr = region.split(' ');
+        // console.log(regionAddr.slice(-1)); // objecy
+        // console.log(regionAddr[regionAddr.length-1]); // string
+
+        // 사용할 값은 string이 더 적절한 것 같으므로
+        // const findRegion = regionAddr[regionAddr.length-1];
 
         // 마지막 값을 가져오면 검색이 안될 가능성이 높으므로
-        // 앞에서 두번째 값을 가져올건데, 쉼표가 있다면, 쉼표 뒤의 값을 가져올 것
+        // 앞에서 두번째 값을 가져옴
+        console.log(regionAddr);
+        console.log(regionAddr[1]);
+        console.log(regionAddr[2]);
         const findRegion = '';
         if(regionAddr[1].indexOf(',') !== -1){ // 쉼표가 있다면
           findRegion = regionAddr[2];
         }else{
           findRegion = regionAddr[1];
         }
+        console.log(findRegion);
         searchAddressToCoordinate(`${city} ${findRegion} ${queryLocation}`);
-        return;
-      }else if(region.indexOf('(')!=-1){// 괄호가 있을시, 괄호의 주소를 가져옴 | 위에서 가져온 값도 괄호가 있을 수 있음
+      }
+
+
+      if(region.indexOf('(')!=-1){// 괄호가 있을시, 괄호의 주소를 가져옴 | 위에서 가져온 값도 괄호가 있을 수 있음
         const firstIdx = region.indexOf('('); // 중복되어도 첫번째 찾는 값을 가져오므로
         const lastIdx =  region.indexOf(')');
         findRegion = region.slice(firstIdx+1, lastIdx);
         searchAddressToCoordinate(`${city} ${findRegion} ${queryLocation}`);
-        return;
+        // getWeatherData(city, findRegion)
       }
 			},
 		error: function(xhr, stat, err){}
@@ -1254,26 +1250,6 @@ const tapClick = function(){
 };
 tapClick()
 
-// home 
-const containerList = document.querySelectorAll('.container');
-const home = ()=>{
-  // 페이지를 이동하거나 리디렉션 할 경우에는 필요하지만, 한 페이지에서 이동 할 것이므로 필요 없다.
-  // location.href = '~.html';
-  containerList[0].classList.add('on'); // main
-
-  // page(menu)가 여럿이 될 경우에는 반복문을 돌리는것이 좋을 것 같음
-  containerList[1].classList.remove('on'); //aside.recoTour
-  menu.classList.remove('active'); // 메뉴 사라짐
-
-  // home이 클릭되면, tap과 tapDisplay를 미세먼지 탭으로 초기화
-  for(let k=0;k<tap.length;k++){
-    tap[k].classList.remove('on');
-    tapDisplay[k].classList.remove('on');
-  }
-  tap[0].classList.add('on');
-  tapDisplay[0].classList.add('on');
-};
-
 // 기상청 단기예보 data xlsx > json
 let cityCodeList = [];
 const getDataJson = ()=>{
@@ -1363,7 +1339,7 @@ const getWeatherData = async ()=>{
   const url = new URL(`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?serviceKey=${API_KEY}&pageNo=1&numOfRows=${rows}&dataType=json&base_date=${nowDate}&base_time=0500&nx=${nx}&ny=${ny}`);
   await fetch(url, {
     headers: {
-      'Accept': "application / json",
+      Accept: "application / json",
     },method: "GET",
   })
   .then(response=>{
@@ -1381,8 +1357,7 @@ const getWeatherData = async ()=>{
       statusWeatherUI(items, nowDate, nowTime);
     } else {
       // throw new Error('유효한 데이터를 가져오지 못했습니다.');
-      console.warn('날씨 데이터를 가져오지 못했습니다.');
-      console.error('기상청 데이터는 자정에 업데이트 되기 때문에 불러오지 못할 수 있습니다.')
+      console.warn('유효한 데이터를 가져오지 못했습니다.');
       return;
     }
   })

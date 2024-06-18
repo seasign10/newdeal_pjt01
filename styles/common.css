@@ -427,7 +427,7 @@ section.dust{
 #container .dust_condition>ul{
   display: flex;
   width: 400px;
-  overflow-x: hidden;
+  overflow: hidden;
   height: 172px;
   position: relative;
 }

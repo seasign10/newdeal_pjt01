@@ -18,7 +18,6 @@ const recoTour = ()=>{
   containerList[1].classList.add('on'); //aside.recoTour
   menu.classList.remove('active'); // 메뉴 사라짐
 };
-window.recoTour = recoTour; // 전역으로 사용하기 위함
 
 // local addr data
 const local = [
@@ -252,7 +251,7 @@ searchCnt++;
     }
 
     document.querySelector('.input_search').value = ''; // 값 비워주기
-    let item = response.v2.addresses[0];
+    item = response.v2.addresses[0];
     // 좌표
     // 새로 검색되어 입력되는 주소 | getWeatherData
     dfs_xy_conv("toXY", item.y, item.x);
@@ -723,10 +722,7 @@ function reAppear(){
   menuChange.style.animation = 'none';
 }
 
-// 탭 : classList 를 사용 (display none X)
-const tap = document.querySelectorAll('.tap h2');
-const tapDisplay = document.querySelectorAll('.container_box section');
-const containerList = document.querySelectorAll('.container');
+
 // 검색창
 // enterEvent
 function searchEnter(event) {
@@ -734,8 +730,6 @@ function searchEnter(event) {
     searchEvent();
     }
 }
-window.searchEnter = searchEnter;
-
 // select로 city 선택
 let selectedValue = '';
 let currentRequestId = 0; //현재요청 ID
@@ -884,16 +878,6 @@ function searchEvent(){
       searchAddressToCoordinate(`${selectedValue} ${searchRegion}`);
 
       isWarn=false; // 새로 검색 성공할 때는 초기화
-
-      // 다른 메뉴를 보고 있을 때도 미세먼지탭 으로 초기화
-      for(let k=0;k<tap.length;k++){
-        tap[k].classList.remove('on');
-        tapDisplay[k].classList.remove('on');
-      }
-      tap[0].classList.add('on');
-      tapDisplay[0].classList.add('on');
-      containerList[0].classList.add('on'); // main
-      containerList[1].classList.remove('on'); //aside.recoTour
       return;
     }
     warnMsg.innerText = '지명만 검색 됩니다.';
@@ -929,16 +913,6 @@ function searchEvent(){
       isWarn=false;
       
       searchAddressToCoordinate(`${selectedValue} ${region} ${searchRegion}`);
-
-      // 다른 메뉴를 보고 있을 때도 미세먼지탭 으로 초기화
-      for(let k=0;k<tap.length;k++){
-        tap[k].classList.remove('on');
-        tapDisplay[k].classList.remove('on');
-      }
-      tap[0].classList.add('on');
-      tapDisplay[0].classList.add('on');
-      containerList[0].classList.add('on'); // main
-      containerList[1].classList.remove('on'); //aside.recoTour
       return;
   }
   }
@@ -1264,6 +1238,10 @@ function statusWeatherUI(items, nowDate, nowTime){
     document.querySelector('.wait_weather').classList.remove('active');
 }
 
+
+// 탭 : classList 를 사용 (display none X)
+const tap = document.querySelectorAll('.tap h2');
+const tapDisplay = document.querySelectorAll('.container_box section');
 const tapClick = function(){
   for(let i=0;i<tap.length;i++){
     tap[i].addEventListener('click', ()=>{
@@ -1279,6 +1257,7 @@ const tapClick = function(){
 tapClick()
 
 // home 
+const containerList = document.querySelectorAll('.container');
 const home = ()=>{
   // 페이지를 이동하거나 리디렉션 할 경우에는 필요하지만, 한 페이지에서 이동 할 것이므로 필요 없다.
   // location.href = '~.html';
@@ -1296,7 +1275,6 @@ const home = ()=>{
   tap[0].classList.add('on');
   tapDisplay[0].classList.add('on');
 };
-window.home = home;
 
 // 기상청 단기예보 data xlsx > json
 let cityCodeList = [];

@@ -4,7 +4,9 @@
 
 ### API KEY ###
 apikey.js
+config.js
 .env
+vite.config.js
 
 ### Django ###
 *.log

@@ -11,14 +11,54 @@ window.onload = function(){
     scrollTo(0, 0);
   },100);
 };
+// 당겨서 새로고침
+let startY = 0; // 시작점
+  let isPulling = false; // 당기고 있는 중인지
+  const refreshIndicator = document.getElementById('refresh-indicator');
+  document.addEventListener('touchstart', (e) => {
+      if (window.scrollY === 0) { // 스크롤이 맨 위에 있을 때만
+        // touches : 접촉하는 모든 지점, 터치 이벤트 객체에서 사용할 수 있음
+        // pageY : 문서의 페이지에서의 y좌표
+          startY = e.touches[0].pageY; // 터치한 순간의 좌표
+          isPulling = true;
+      }
+  });
 
+  document.addEventListener('touchmove', (e) => { 
+      if (isPulling) {
+        // 터치한 순간의 좌표와 현재 좌표를 비교
+          const currentY = e.touches[0].pageY; // 현재 좌표
+          if (currentY > startY + 100) { // 100px 이상 당겼을 때
+              refreshIndicator.style.display = 'block';// 화면에 보이게
+          }
+      }
+  });
 
-const recoTour = ()=>{
-  containerList[0].classList.remove('on'); // main
-  containerList[1].classList.add('on'); //aside.recoTour
-  menu.classList.remove('active'); // 메뉴 사라짐
-};
-window.recoTour = recoTour; // 전역으로 사용하기 위함
+  document.addEventListener('touchend', (e) => { // 터치가 끝났을 때
+      if (isPulling) {
+        // changedTouches : 터치가 끝난 지점
+          const currentY = e.changedTouches[0].pageY; // 현재 좌표
+          if (currentY > startY + 100) {
+              // 새로고침 로직 실행
+              setTimeout(() => {
+                  refreshIndicator.style.display = 'none';
+                  window.location.reload();
+                  // console.log('새로고침');
+              }, 1000); // 2초 후 새로고침 완료
+          } else {
+              refreshIndicator.style.display = 'none';
+          }
+          isPulling = false;
+      }
+  });
+//============
+
+// const recoTour = ()=>{
+//   containerList[0].classList.remove('on'); // main
+//   containerList[1].classList.add('on'); //aside.recoTour
+//   menu.classList.remove('active'); // 메뉴 사라짐
+// };
+// window.recoTour = recoTour; // 전역으로 사용하기 위함
 
 // local addr data
 const local = [
@@ -634,7 +674,7 @@ for(let i=0;i<6;i++){
         <dl>
           <dt class="type">${dustName[i]}</dt>
           <dd><i class="fa-regular fa-face-${statusEmoji[dustGrade[i]]}"></i></dd>
-          <dd class="status">${dustLv[dustGrade[i]]}</dd>
+          <dd class="status">${dustLv[dustGrade[i]-1]}</dd>
           <dd class="unit">${dustValue[i]}</dd>
         </dl>`
         // 3개씩 나눠서 pagenation / 하지만 마지막에도 해당 태그가 붙으면 안됨
@@ -1557,3 +1597,5 @@ function infoModal(){
   });
 };
 infoModal()
+
+

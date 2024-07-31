@@ -34,6 +34,8 @@
       <h2 class="hidden">메뉴</h2>
       <ul>
         <li><a class="aboutInfo" href="#">문열어 민환기?</a></li>
+        <li><a class="recoPlace" href="#" onclick="recoTour()">추천 관광지</a></li>
+        <!-- <li><a href="">메뉴3</a></li> -->
       </ul>
       <div class="search">
         <h2 class="hidden">검색창</h2>
@@ -48,7 +50,7 @@
       </div>
     </div>
     <h1 class="web_name">문열어 민환기</h1>
-    <div class="home"></div>
+    <div class="home" onclick="home()"><i class="fa-solid fa-house"></i></div>
   </header>
   
   <!-- 모달 -->
@@ -131,6 +133,47 @@
       </div>
     </div>
   </main>
+  <aside id="sub_container" class="container">
+    <div class="reco_tour on">
+      <h2>추천 관광지</h2>
+      <p>오늘은 이 곳의 날씨가 좋아요!</p>
+      <ul class="tour_list">
+        <li class="card">
+          <div class="tour_img"></div>
+          <dl>
+            <dt>
+              <h4>관광지 이름</h4>
+              <span>아주 엄청난 곳</span>
+            </dt>
+            <dd>
+              <h4>관광지 설명</h4>
+              <p>
+                이곳은 엄청난 곳이다. 대충 설명이 이렇게 들어 갈 것이며, 어쩌구저쩌구이다.
+              </p>
+            </dd>
+          </dl>
+        </li>
+        <li class="card">
+          <div class="tour_img"></div>
+          <dl>
+            <dt>
+              <h4>관광지 이름</h4>
+              <span class="no_reco_data">관광지 이름을 불러올 수 없어요!</span>
+            </dt>
+            <dd>
+              <h4>관광지 설명</h4>
+              <p class="no_reco_data">설명을 불러 올 수 없어요!</p>
+            </dd>
+          </dl>
+        </li>
+      </ul>
+      <div class="btn_box">
+        <button class="reco_btn"><i class="fa-solid fa-share"></i> 다시</button>
+        <button class="share_btn"><i class="fa-solid fa-share-nodes"></i> 공유</button>
+      </div>
+    </div>
+  </aside>
+  
 
   <footer id="footer"></footer>
 

@@ -39,24 +39,6 @@ document.addEventListener('DOMContentLoaded', async function(){
     console.error('클라이언트 ID가 없습니다. API 로드를 중단합니다.');
   }
 
-  // 환경 변수 불러오기
-  async function fetchKey (){
-    try {
-      const response = await fetch("/.netlify/functions/getEnv");
-      const data = await response.json();
-
-      // 환경 변수 설정
-      API_KEY = data.API_KEY;
-      NAVER_API_CLIENT_ID = data.NAVER_API_CLIENT_ID;
-      VWORLD_API_KEY = data.VWORLD_API_KEY;
-      // NAVER_API_KEY = data.NAVER_API_KEY;
-      
-    } catch (error) {
-      console.error("env 불러오기 실패:", error);
-    }
-  }
-
-  
   async function loadPage(){
     // base | 새로고침 시, window 가장 위로
     window.onload = function(){
@@ -183,87 +165,6 @@ document.addEventListener('DOMContentLoaded', async function(){
           code: '%EC%84%B8%EC%A2%85',
         },
       ]
-
-      let repeat = 0; // 반복문을 한번만 실행하기 위한 변수
-
-      const menu = document.querySelector('.menu_list');
-      const menuBtn = document.querySelector('.menu_bar');
-      const menuInBtn = document.querySelector('.menu_icon i');
-      const warnMsg = document.querySelector('.warn_msg');
-      let alreadyAjaxCnt = 0;
-      let isWarn=false;
-
-      // map을 전역으로 지정해놔야 제한없이 호출이 가능
-      let map
-      let addrCity = '';
-      let addrRegion = '';
-      async function asyncNaverAPI(){
-          // 네이버 지도 생성
-          map = new naver.maps.Map('map', {
-            center: new naver.maps.LatLng(37.56100278, 126.9996417),
-            zoom: 12,
-            draggable: false,
-            minZoom: 12, // 줌을 disable 하기 위함
-            maxZoom: 12, // 줌을 disable 하기 위함
-            disableDoubleTapZoom: true,
-            disableDoubleClickZoom: true,
-            disableTwoFingerTapZoom: true
-          });
-        
-          let infowindow = new naver.maps.InfoWindow();
-          window.addEventListener('load', function() {
-            if(navigator.geolocation){
-              navigator.geolocation.getCurrentPosition(onSuccessGeolocation,onErrorGeolocation);
-              // console.log(infowindow.DEFAULT_OPTIONS)
-              let center = map.getCenter();
-              infowindow.setContent(`<span class="undefined_location">위치를 찾지 못했어요.</span>`)
-              infowindow.open(map, center); //중앙 위치에 infowindow 열기        
-            }
-          });
-        
-          function onSuccessGeolocation(position){
-            // 성공 시 처리 로직
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            dfs_xy_conv("toXY", lat, lng); // 현재 위치 로드될 때 xy
-            let location = new naver.maps.LatLng(lat, lng);
-            map.setCenter(location) // 지도의 중심을 현재 위치로 이동
-            infowindow.setContent(`<i class="fa-solid fa-location-dot loaction_icon"></i>`);
-            infowindow.open(map, location); // 현재 위치에 인포 윈도우를 엽니다.
-          
-            searchCoordinateToAddress(location);
-          }
-          function onErrorGeolocation(error){
-            // 에러 시 처리 로직
-            console.log(error);
-            infowindow.setContent('<div>Geolocation 오류: ' + error.message + '</div>');
-            let center = map.getCenter();
-            infowindow.open(map, center); // 중앙 위치에 인포 윈도우를 엽니다.
-          }
-        
-          // 좌표 > 주소(위치정보)
-          function searchCoordinateToAddress(latlng){ // 주소 로드될 때만 위경도 값을 이용해서 주소 찾기
-            naver.maps.Service.reverseGeocode({
-              coords: latlng,
-              orders: [
-                naver.maps.Service.OrderType.ADDR,
-              ].join(',')
-            }, function(status, response){
-              if(status===naver.maps.Service.Status.ERROR){
-                return alert('위치를 불러오는 중 문제가 생겼습니다.')
-              }
-              
-              let item = response.v2.results[0].region
-              addrCity = item.area1.alias;
-              addrRegion = item.area2.name;
-              updateInfo(addrCity, addrRegion);
-
-              getData();
-              getWeatherData();
-              }
-            );
-          }
-      }
 
       // 반복 함수 제어
       let searchCnt = 0;
@@ -1623,4 +1524,101 @@ document.addEventListener('DOMContentLoaded', async function(){
 
   }
 
+  // 환경 변수 불러오기
+  async function fetchKey (){
+    try {
+      const response = await fetch("/.netlify/functions/getEnv");
+      const data = await response.json();
+
+      // 환경 변수 설정
+      API_KEY = data.API_KEY;
+      NAVER_API_CLIENT_ID = data.NAVER_API_CLIENT_ID;
+      VWORLD_API_KEY = data.VWORLD_API_KEY;
+      // NAVER_API_KEY = data.NAVER_API_KEY;
+      
+    } catch (error) {
+      console.error("env 불러오기 실패:", error);
+    }
+  }
+
+  let repeat = 0; // 반복문을 한번만 실행하기 위한 변수
+
+  const menu = document.querySelector('.menu_list');
+  const menuBtn = document.querySelector('.menu_bar');
+  const menuInBtn = document.querySelector('.menu_icon i');
+  const warnMsg = document.querySelector('.warn_msg');
+  let alreadyAjaxCnt = 0;
+  let isWarn=false;
+
+  // map을 전역으로 지정해놔야 제한없이 호출이 가능
+  let map
+  let addrCity = '';
+  let addrRegion = '';
+  async function asyncNaverAPI(){
+    // 네이버 지도 생성
+    map = new naver.maps.Map('map', {
+      center: new naver.maps.LatLng(37.56100278, 126.9996417),
+      zoom: 12,
+      draggable: false,
+      minZoom: 12, // 줌을 disable 하기 위함
+      maxZoom: 12, // 줌을 disable 하기 위함
+      disableDoubleTapZoom: true,
+      disableDoubleClickZoom: true,
+      disableTwoFingerTapZoom: true
+    });
+  
+    let infowindow = new naver.maps.InfoWindow();
+    window.addEventListener('load', function() {
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(onSuccessGeolocation,onErrorGeolocation);
+        // console.log(infowindow.DEFAULT_OPTIONS)
+        let center = map.getCenter();
+        infowindow.setContent(`<span class="undefined_location">위치를 찾지 못했어요.</span>`)
+        infowindow.open(map, center); //중앙 위치에 infowindow 열기        
+      }
+    });
+  
+    function onSuccessGeolocation(position){
+      // 성공 시 처리 로직
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      dfs_xy_conv("toXY", lat, lng); // 현재 위치 로드될 때 xy
+      let location = new naver.maps.LatLng(lat, lng);
+      map.setCenter(location) // 지도의 중심을 현재 위치로 이동
+      infowindow.setContent(`<i class="fa-solid fa-location-dot loaction_icon"></i>`);
+      infowindow.open(map, location); // 현재 위치에 인포 윈도우를 엽니다.
+    
+      searchCoordinateToAddress(location);
+    }
+    function onErrorGeolocation(error){
+      // 에러 시 처리 로직
+      console.log(error);
+      infowindow.setContent('<div>Geolocation 오류: ' + error.message + '</div>');
+      let center = map.getCenter();
+      infowindow.open(map, center); // 중앙 위치에 인포 윈도우를 엽니다.
+    }
+  
+    // 좌표 > 주소(위치정보)
+    function searchCoordinateToAddress(latlng){ // 주소 로드될 때만 위경도 값을 이용해서 주소 찾기
+      naver.maps.Service.reverseGeocode({
+        coords: latlng,
+        orders: [
+          naver.maps.Service.OrderType.ADDR,
+        ].join(',')
+      }, function(status, response){
+        if(status===naver.maps.Service.Status.ERROR){
+          return alert('위치를 불러오는 중 문제가 생겼습니다.')
+        }
+        
+        let item = response.v2.results[0].region
+        addrCity = item.area1.alias;
+        addrRegion = item.area2.name;
+        updateInfo(addrCity, addrRegion);
+
+        getData();
+        getWeatherData();
+        }
+      );
+    }
+  }
 });

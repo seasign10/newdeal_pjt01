@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', async function(){
 
   // 네이버 지도 API 로드
   if(NAVER_API_CLIENT_ID){
-    console.log('네이버 지도 API 로드 완료됐고 삽입 될 예정임 ㅇㅇ');
+    console.log('네이버 지도 API 로드 완료됐고 삽입 될 예정');
+    wait();
     const script = document.createElement('script');
     script.src =
       `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_API_CLIENT_ID}`;
@@ -475,7 +476,6 @@ document.addEventListener('DOMContentLoaded', async function(){
       timeNow();
       const date = timeNow();
       document.querySelector('.cuttent_time').innerHTML = `${date.year}-${date.month}-${date.date}`;
-      wait();
       document.querySelector('.tap').classList.add('active')
       const queryBtn = document.querySelector('.fa-circle-question');
       queryBtn.innerHTML += `

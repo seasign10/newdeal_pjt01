@@ -20,7 +20,7 @@ async function fetchKey (){
   }
 }
 await fetchKey ()
-
+console.log(API_KEY);
 // base | 새로고침 시, window 가장 위로
 window.onload = function(){
   setTimeout(function(){

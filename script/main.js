@@ -787,7 +787,7 @@ const containerList = document.querySelectorAll('.container');
 // 검색창
 // enterEvent
 function searchEnter(event) {
-  if (event.keyCode == 13) {
+	if (event.keyCode == 13) {
     searchEvent();
     }
 }
@@ -1025,15 +1025,15 @@ let  callAjax = function(city, queryLocation, originRegion){
   console.warn('Convert from road name to place name.');
   // 주소 값에 지역 까지 들어가면 검색이 되지 않음.
   const sizeCnt = 20;
-  let  data = `service=search&request=search&version=2.0&size=${sizeCnt}&page=1&query=${queryLocation}&type=road&format=json&errorformat=json&key=${VWORLD_API_KEY}`
+	let  data = `service=search&request=search&version=2.0&size=${sizeCnt}&page=1&query=${queryLocation}&type=road&format=json&errorformat=json&key=${VWORLD_API_KEY}`
 
-  $.ajax({
-    type: "get",
-    url: "https://api.vworld.kr/req/search",
-    data : data,
-    dataType: 'jsonp',
-    async: true,
-    success: function(data){
+	$.ajax({
+		type: "get",
+		url: "https://api.vworld.kr/req/search",
+		data : data,
+		dataType: 'jsonp',
+		async: true,
+		success: function(data){
 
       // console.log(queryLocation, ' : ',data.response.status);
       if(data.response.status=='NOT_FOUND'){
@@ -1154,9 +1154,9 @@ let  callAjax = function(city, queryLocation, originRegion){
         searchAddressToCoordinate(`${city} ${findRegion} ${queryLocation}`);
         return;
       }
-      },
-    error: function(xhr, stat, err){}
-  });
+			},
+		error: function(xhr, stat, err){}
+	});
 }
 
 ////////////////////// 날씨 데이터 ///////////////////////
@@ -1614,3 +1614,5 @@ function infoModal(){
   });
 };
 infoModal()
+
+

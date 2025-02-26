@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', async function(){
 
   // 네이버 지도 API 로드
   if(NAVER_API_CLIENT_ID){
-    console.log('네이버 지도 API 로드 완료됐고 삽입 될 예정');
     const script = document.createElement('script');
     script.src =
       `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_API_CLIENT_ID}`;

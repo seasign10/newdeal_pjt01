@@ -1,5 +1,9 @@
 exports.handler = async function () {
   return {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
     statusCode: 200,
     body: JSON.stringify({
       API_KEY: process.env.API_KEY, // Netlify 환경변수에서 가져옴

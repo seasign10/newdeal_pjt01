@@ -14,6 +14,7 @@ async function fetchKey (){
     NAVER_API_CLIENT_ID = data.NAVER_API_CLIENT_ID;
     VWORLD_API_KEY = data.VWORLD_API_KEY;
     // NAVER_API_KEY = data.NAVER_API_KEY;
+    console.log(NAVER_API_CLIENT_ID);
   } catch (error) {
     console.error("env 불러오기 실패:", error);
   }
@@ -157,6 +158,8 @@ let isWarn=false;
 
 // 네이버 지도 API
 document.addEventListener('DOMContentLoaded', function(){
+  fetchKey(); // 환경변수 불러오기
+
   // 네이버 지도 API 로드
   const script = document.createElement('script');
   script.src =
@@ -176,11 +179,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
     //onload + async => 스크립트 로드 완료 후, 실행하도록 function() 을 사용할거면 화살표 함수를 없애도록.
     scriptSub.onload = async()=>{ // 서브모듈
-      await fetchKey(); // 환경변수 불러오기
       // 네이버 함수 실행
       // 함수실행순서 정하기 : asyncNaverAPI > getData()
       await asyncNaverAPI();
-      console.log('네이버 지도 로드 완료');
       // getData(); // updateInfo 뒤에 실행하고 싶으므로 아예 내부 함수로
     }
   };

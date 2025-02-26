@@ -1,9 +1,9 @@
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', async function(){
   let API_KEY = '';
   let NAVER_API_CLIENT_ID = '';
   let VWORLD_API_KEY = '';
-  let NAVER_API_KEY = '';
-  fetchKey();
+  // let NAVER_API_KEY = '';
+  await fetchKey();
 
   // 환경 변수 불러오기
   async function fetchKey (){
@@ -15,11 +15,13 @@ document.addEventListener('DOMContentLoaded', function(){
       API_KEY = data.API_KEY;
       NAVER_API_CLIENT_ID = data.NAVER_API_CLIENT_ID;
       VWORLD_API_KEY = data.VWORLD_API_KEY;
-      NAVER_API_KEY = data.NAVER_API_KEY;
+      // NAVER_API_KEY = data.NAVER_API_KEY;
     } catch (error) {
       console.error("env 불러오기 실패:", error);
     }
   }
+
+  console.log(API_KEY, NAVER_API_CLIENT_ID, VWORLD_API_KEY);
   
   // base | 새로고침 시, window 가장 위로
   window.onload = function(){

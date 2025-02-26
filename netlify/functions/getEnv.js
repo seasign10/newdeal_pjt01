@@ -9,7 +9,7 @@ exports.handler = async function () {
       API_KEY: process.env.API_KEY, // Netlify 환경변수에서 가져옴
       VWORLD_API_KEY: process.env.VWORLD_API_KEY,
       NAVER_API_CLIENT_ID: process.env.NAVER_API_CLIENT_ID,
-      NAVER_API_KEY: process.env.NAVER_API_KEY,
+      // NAVER_API_KEY: process.env.NAVER_API_KEY,
     }),
   };
 };

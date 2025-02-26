@@ -19,7 +19,6 @@ async function fetchKey (){
     console.error("env 불러오기 실패:", error);
   }
 }
-await fetchKey ()
 
 // base | 새로고침 시, window 가장 위로
 window.onload = function(){
@@ -158,7 +157,8 @@ let alreadyAjaxCnt = 0;
 let isWarn=false;
 
 // 네이버 지도 API
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', async function(){
+  await fetchKey ();
   console.log('네이버 지도 API 로드 완료');
   console.log(NAVER_API_CLIENT_ID);
   // 네이버 지도 API 로드

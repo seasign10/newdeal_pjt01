@@ -159,33 +159,37 @@ let isWarn=false;
 // 네이버 지도 API
 document.addEventListener('DOMContentLoaded', async function(){
   await fetchKey ();
-  console.log('네이버 지도 API 로드 완료');
-  console.log(NAVER_API_CLIENT_ID);
+
   // 네이버 지도 API 로드
-  const script = document.createElement('script');
-  script.src =
-    `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_API_CLIENT_ID}`;
-  script.async = true;
-  script.defer = true;
-  document.head.appendChild(script);
-
-  script.onload = ()=>{// 메인모듈 onload 후, 서브 모듈
-    // 서브 모듈 (reverseGeocode 사용을 위해)
-    const scriptSub = document.createElement('script');
-    scriptSub.src =
-      `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_API_CLIENT_ID}&submodules=geocoder`;
-    scriptSub.async = true;
-    scriptSub.defer = true;
-    document.head.appendChild(scriptSub);
-
-    //onload + async => 스크립트 로드 완료 후, 실행하도록 function() 을 사용할거면 화살표 함수를 없애도록.
-    scriptSub.onload = async()=>{ // 서브모듈
-      // 네이버 함수 실행
-      // 함수실행순서 정하기 : asyncNaverAPI > getData()
-      await asyncNaverAPI();
-      // getData(); // updateInfo 뒤에 실행하고 싶으므로 아예 내부 함수로
-    }
-  };
+  if(NAVER_API_CLIENT_ID){
+    console.log('네이버 지도 API 로드 완료');
+    const script = document.createElement('script');
+    script.src =
+      `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_API_CLIENT_ID}`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  
+    script.onload = ()=>{// 메인모듈 onload 후, 서브 모듈
+      // 서브 모듈 (reverseGeocode 사용을 위해)
+      const scriptSub = document.createElement('script');
+      scriptSub.src =
+        `https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=${NAVER_API_CLIENT_ID}&submodules=geocoder`;
+      scriptSub.async = true;
+      scriptSub.defer = true;
+      document.head.appendChild(scriptSub);
+  
+      //onload + async => 스크립트 로드 완료 후, 실행하도록 function() 을 사용할거면 화살표 함수를 없애도록.
+      scriptSub.onload = async()=>{ // 서브모듈
+        // 네이버 함수 실행
+        // 함수실행순서 정하기 : asyncNaverAPI > getData()
+        await asyncNaverAPI();
+        // getData(); // updateInfo 뒤에 실행하고 싶으므로 아예 내부 함수로
+      }
+    };
+  } else {
+    console.error('클라이언트 ID가 없습니다. API 로드를 중단합니다.');
+  }
 });
 
 // map을 전역으로 지정해놔야 제한없이 호출이 가능

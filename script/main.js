@@ -16,12 +16,6 @@ document.addEventListener('DOMContentLoaded', function(){
       NAVER_API_CLIENT_ID = data.NAVER_API_CLIENT_ID;
       VWORLD_API_KEY = data.VWORLD_API_KEY;
       NAVER_API_KEY = data.NAVER_API_KEY;
-  
-      console.log("API_KEY:", API_KEY);
-      console.log("NAVER_API_CLIENT_ID:", NAVER_API_CLIENT_ID);
-      console.log("VWORLD_API_KEY:", VWORLD_API_KEY);
-      console.log("NAVER_API_KEY:", NAVER_API_KEY);
-  
     } catch (error) {
       console.error("env 불러오기 실패:", error);
     }

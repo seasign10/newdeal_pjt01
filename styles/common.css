@@ -1,9 +1,9 @@
 /* reset */
 *{margin: 0;padding: 0;list-style: none;font-weight: normal;font-size: 16px;text-decoration: none;}
-html, body{min-width: 100%;height: 100%;}
+html, body{min-width: 100%;height: 100vh;position: relative;}
 
 /* base */
-.hidden{display: inline-block;width: 0;height: 0;font-size: 0;z-index: -999;}
+.hidden{display: inline-block;width: 0;font-size: 0;z-index: -999;}
 span{text-align: center;display: inline-block;}
 .animated{transition: 0.5s ease;}
 
@@ -514,7 +514,7 @@ section.weather.active{
   border-radius: 20px;
   color: #fff;
   background: linear-gradient(#ffffff00 0.1%, #086375, #5c3063);
-  height: 1110px;
+  height: 1180px;
 }
 #container .weather_box{
   height: 83%;
@@ -564,7 +564,7 @@ section.weather.active{
 #container .weather_status p{
   text-align: center;
   margin: 1rem;
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 100;
 }
 #container ul.today_weather_list{

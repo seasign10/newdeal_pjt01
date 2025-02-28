@@ -463,7 +463,7 @@ section.dust{
   background-color: gray;
 }
 #container .dust_condition dt{text-align: center; white-space: nowrap;}
-#container .dust_condition dd{text-align: center;}
+#container .dust_condition dd{text-align: center; white-space: nowrap;}
 #container .dust_condition dd>i{font-size: 32px;margin: 0.5rem 0;}
 #container .naver_map{
   margin: 3rem;

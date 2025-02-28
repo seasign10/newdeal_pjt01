@@ -950,7 +950,7 @@ function searchEvent(){
       tap[0].classList.add('on');
       tapDisplay[0].classList.add('on');
       containerList[0].classList.add('on'); // main
-      containerList[1].classList.remove('on'); //aside.recoTour
+      // containerList[1].classList.remove('on'); //aside.recoTour
       return;
     }
     warnMsg.innerText = '지명만 검색 됩니다.';
@@ -1019,6 +1019,7 @@ searchBtn();
 let  callAjax = function(city, queryLocation, originRegion){
   if(searchCnt>=searchMax){
     console.warn('중복 반환');
+    alert('검색할 수 없습니다. 다시 시도해주세요.');
     return;
   }
   if(alreadyAjaxCnt){return;}else{alreadyAjaxCnt++;}
